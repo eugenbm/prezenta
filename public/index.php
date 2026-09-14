@@ -29,7 +29,7 @@ $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
 
 session_set_cookie_params([
     'lifetime' => 0,
-    'path' => rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/',
+    'path' => base_path() . '/',
     'domain' => '',
     'secure' => $isHttps,
     'httponly' => true,

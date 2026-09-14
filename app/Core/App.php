@@ -15,18 +15,18 @@ final class App
     /**
      * Hartă rută => [Controller::class, metodă, rol necesar].
      * Rol: null = doar autentificat (orice rol), 'guest' = acces public,
-     * 'admin' / 'aspirant' = rol specific necesar.
+     * 'admin' / 'applicant' = rol specific necesar.
      */
     private const ROUTES = [
         'login' => [AuthController::class, 'login', 'guest'],
         'logout' => [AuthController::class, 'logout', null],
         'setup' => [SetupController::class, 'index', 'guest'],
 
-        'applicant/dashboard' => [ApplicantController::class, 'dashboard', 'aspirant'],
-        'applicant/activities' => [ApplicantController::class, 'activities', 'aspirant'],
-        'applicant/activity/create' => [ApplicantController::class, 'createActivity', 'aspirant'],
-        'applicant/activity/edit' => [ApplicantController::class, 'editActivity', 'aspirant'],
-        'applicant/profile' => [ApplicantController::class, 'profile', 'aspirant'],
+        'applicant/dashboard' => [ApplicantController::class, 'dashboard', 'applicant'],
+        'applicant/activities' => [ApplicantController::class, 'activities', 'applicant'],
+        'applicant/activity/create' => [ApplicantController::class, 'createActivity', 'applicant'],
+        'applicant/activity/edit' => [ApplicantController::class, 'editActivity', 'applicant'],
+        'applicant/profile' => [ApplicantController::class, 'profile', 'applicant'],
 
         'admin/dashboard' => [AdminController::class, 'dashboard', 'admin'],
         'admin/users' => [AdminController::class, 'users', 'admin'],

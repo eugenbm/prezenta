@@ -26,7 +26,7 @@
     </div>
 
     <header>
-        <img src="<?= asset_url('img/logo-salvamont.svg') ?>" alt="Salvamont Zărnești">
+        <img src="<?= logo_url() ?>" alt="Salvamont Zărnești">
         <div>
             <h1>Raport activități voluntari</h1>
             <div>Salvamont Zărnești — Registru digital de activități</div>

@@ -26,7 +26,8 @@ activități administrative etc. Conturile sunt create exclusiv de administrator
 │   ├── Models/          Acces la date (User, Activity, ActivityType, AuditLog)
 │   └── views/           Template-uri PHP (layouts, auth, applicant, admin)
 ├── autoload.php         Autoloader PSR-4 minimal, fără Composer
-├── config/config.php    Configurare centrală, citește .env
+├── config.example.php   Șablon de configurare (variabile DB, app, roluri) — se copiază ca config.php
+├── config.php           Configurare reală (bază de date, app.base_url, siglă, roluri) — NU se urcă în git
 ├── database/
 │   ├── schema.sql       Schema completă a bazei de date
 │   └── seed.sql         Tipuri de activități implicite
@@ -34,9 +35,13 @@ activități administrative etc. Conturile sunt create exclusiv de administrator
 │   ├── index.php        Front controller (singurul punct de intrare)
 │   └── assets/          CSS, imagini (inclusiv sigla Salvamont)
 ├── storage/logs/        Fișiere scrise de aplicație (nu trebuie expuse public)
-├── .env.example         Șablon pentru configurarea bazei de date/aplicației
 └── INSTALLATION_CPANEL.md   Ghid pas-cu-pas de instalare în cPanel
 ```
+
+`config.php` se află **direct la rădăcina proiectului, în afara `public_html`**
+(niciodată în `public/`), astfel încât datele de conectare la baza de date să
+nu fie niciodată accesibile din browser.
+
 
 ## Roluri
 
@@ -56,14 +61,15 @@ Un voluntar nu își poate aproba/respinge propria activitate, chiar dacă are
 
 Vezi [INSTALLATION_CPANEL.md](INSTALLATION_CPANEL.md) pentru pașii compleți
 de instalare pe un hosting cPanel (bază de date, import schemă, configurare
-`.env`, permisiuni, SSL, primul cont de administrator etc.).
+`config.php`, permisiuni, SSL, primul cont de administrator etc.).
 
 Pe scurt, pentru dezvoltare/testare locală cu un server PHP + MySQL:
 
 1. Creați o bază de date și importați `database/schema.sql`, apoi
    `database/seed.sql`.
-2. Copiați `.env.example` ca `.env` la rădăcina proiectului și completați
-   datele de conectare la baza de date.
+2. Copiați `config.example.php` ca `config.php` la rădăcina proiectului și
+   completați datele de conectare la baza de date (secțiunea `db`) și
+   `app.base_url`.
 3. Configurați serverul web astfel încât document root-ul să fie folderul
    `public/`.
 4. Accesați `?route=setup` (ex: `http://localhost/index.php?route=setup`)
@@ -74,11 +80,12 @@ Pe scurt, pentru dezvoltare/testare locală cu un server PHP + MySQL:
 
 ## Configurarea siglei și a cromaticii
 
-- **Sigla**: înlocuiți fișierul placeholder
-  `public/assets/img/logo-salvamont.svg` cu sigla oficială Salvamont Zărnești,
-  păstrând exact același nume de fișier (sau actualizați referințele din
-  `app/views/layouts/main.php` și `app/views/auth/*.php` dacă folosiți alt
-  format, de exemplu `.png`).
+- **Sigla**: înlocuiți fișierul placeholder de la calea indicată de
+  `app.logo_path` din `config.php` (implicit
+  `public/assets/img/logo/salvamont-placeholder.svg`) cu sigla oficială
+  Salvamont Zărnești, păstrând același nume de fișier — sau actualizați
+  valoarea `app.logo_path` din `config.php` dacă folosiți alt nume/format
+  (de exemplu `.png`).
 - **Cromatica**: culorile aplicației (roșu/portocaliu, fără albastru) sunt
   definite central în `public/assets/css/style.css`, în blocul `:root`
   (variabilele `--sv-primary`, `--sv-accent` etc.). Modificați acolo pentru a
@@ -99,8 +106,9 @@ Pe scurt, pentru dezvoltare/testare locală cu un server PHP + MySQL:
   încercări eșuate).
 - Jurnal de audit (`audit_log`) pentru acțiuni administrative (creare/editare
   cont, dezactivare/reactivare, resetare parolă, aprobare/respingere).
-- Fără date sensibile în codul sursă — toate secretele vin din `.env`
-  (fișier exclus din control de versiuni prin `.gitignore`).
+- Fără date sensibile în codul sursă — toate secretele vin din `config.php`
+  (fișier exclus din control de versiuni prin `.gitignore`; se distribuie
+  doar `config.example.php`, fără date reale).
 
 ## Date de test
 

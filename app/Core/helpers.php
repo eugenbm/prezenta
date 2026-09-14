@@ -6,14 +6,20 @@ use App\Core\Auth;
 use App\Core\Csrf;
 
 /**
- * Returnează o valoare din configurația aplicației (app/../config/config.php),
- * ex: config('db.host') sau config('app') pentru toată secțiunea.
+ * Returnează o valoare din configurația aplicației, citită din config.php
+ * aflat direct sub rădăcina proiectului, în afara public_html.
+ * Ex: config('db.host') sau config('app') pentru toată secțiunea.
  */
 function config(string $key, mixed $default = null): mixed
 {
     static $config = null;
     if ($config === null) {
-        $config = require dirname(__DIR__, 2) . '/config/config.php';
+        $path = dirname(__DIR__, 2) . '/config.php';
+        if (!is_file($path)) {
+            http_response_code(500);
+            die('Fișierul de configurare config.php lipsește. Copiați config.example.php ca config.php și completați datele de conectare la baza de date.');
+        }
+        $config = require $path;
     }
 
     $segments = explode('.', $key);
@@ -28,12 +34,15 @@ function config(string $key, mixed $default = null): mixed
     return $value;
 }
 
-/** Calea de bază a aplicației (folder-ul care conține index.php), detectată automat. */
+/** Calea de bază a aplicației, din config('app.base_url'); detectare automată doar ca rezervă. */
 function base_path(): string
 {
     static $base = null;
     if ($base === null) {
-        $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+        $configured = (string) config('app.base_url', '');
+        $base = $configured !== ''
+            ? rtrim($configured, '/')
+            : rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
     }
 
     return $base;
@@ -49,6 +58,17 @@ function route_url(string $query = ''): string
 function asset_url(string $path): string
 {
     return base_path() . '/assets/' . ltrim($path, '/');
+}
+
+/** Construiește URL-ul siglei, din config('app.logo_path'). */
+function logo_url(): string
+{
+    return base_path() . '/' . ltrim((string) config('app.logo_path', '/assets/img/logo/salvamont-placeholder.svg'), '/');
+}
+
+function app_name(): string
+{
+    return (string) config('app.name', 'Salvamont Zărnești');
 }
 
 function redirect(string $url): never

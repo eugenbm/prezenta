@@ -49,7 +49,7 @@ final class User
     public static function countActiveVolunteers(): int
     {
         $stmt = Database::connection()->query(
-            "SELECT COUNT(*) FROM users WHERE role = 'aspirant' AND is_active = 1"
+            "SELECT COUNT(*) FROM users WHERE role = 'applicant' AND is_active = 1"
         );
         return (int) $stmt->fetchColumn();
     }

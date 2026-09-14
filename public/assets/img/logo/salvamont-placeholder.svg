@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
   <!--
     PLACEHOLDER — înlocuiți acest fișier cu sigla oficială Salvamont Zărnești.
-    Calea așteptată de aplicație: public/assets/img/logo-salvamont.svg
-    (păstrați exact acest nume de fișier, sau actualizați referințele din
-    app/views/layouts/main.php și app/views/auth/*.php dacă folosiți alt format, ex. .png)
+    Calea este configurată în config.php, cheia app.logo_path
+    (implicit: /assets/img/logo/salvamont-placeholder.svg). Păstrați același
+    nume de fișier, sau actualizați valoarea logo_path din config.php dacă
+    folosiți alt nume/format (ex. .png).
   -->
   <circle cx="100" cy="100" r="96" fill="#b3202c" stroke="#241f1e" stroke-width="4"/>
   <path d="M40 140 L100 50 L160 140 Z" fill="#f7f4f1" stroke="#241f1e" stroke-width="3"/>

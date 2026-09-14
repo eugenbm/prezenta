@@ -48,7 +48,7 @@ final class AdminController extends Controller
         $email = $this->input('email');
         $username = $this->input('username');
         $password = (string) ($_POST['password'] ?? '');
-        $role = $this->input('role', 'aspirant');
+        $role = $this->input('role', 'applicant');
 
         $errors = $this->validateUser($firstName, $lastName, $email, $username, $role);
         if (strlen($password) < 10) {
@@ -93,7 +93,7 @@ final class AdminController extends Controller
             $lastName = $this->input('last_name');
             $email = $this->input('email');
             $username = $this->input('username');
-            $role = $this->input('role', 'aspirant');
+            $role = $this->input('role', 'applicant');
 
             $errors = $this->validateUser($firstName, $lastName, $email, $username, $role, $id);
             if ($errors) {
@@ -175,7 +175,7 @@ final class AdminController extends Controller
         if ($username === '' || !preg_match('/^[a-zA-Z0-9._-]{3,60}$/', $username)) {
             $errors['username'] = 'Numele de utilizator trebuie să aibă 3-60 caractere (litere, cifre, . _ -).';
         }
-        if (!in_array($role, ['admin', 'aspirant'], true)) {
+        if (!in_array($role, config('roles', ['admin', 'applicant']), true)) {
             $errors['role'] = 'Rol invalid.';
         }
         if (!$errors && User::existsByUsernameOrEmail($username, $email, $excludeId)) {
@@ -199,7 +199,7 @@ final class AdminController extends Controller
 
         $activities = Activity::listForAdmin(array_filter($filters));
         $types = ActivityType::allActive();
-        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'aspirant');
+        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'applicant');
 
         $this->render('admin/activities', compact('activities', 'types', 'volunteers', 'filters'));
     }
@@ -316,7 +316,7 @@ final class AdminController extends Controller
         $byType = Activity::reportByType(array_filter($filters));
         $byVolunteer = Activity::reportByVolunteer(array_filter($filters));
         $types = ActivityType::allActive();
-        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'aspirant');
+        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'applicant');
 
         $this->render('admin/reports', compact('activities', 'byType', 'byVolunteer', 'types', 'volunteers', 'filters'));
     }

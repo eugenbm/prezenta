@@ -11,7 +11,7 @@
 <body class="auth-page">
 <div class="auth-card" style="max-width: 480px;">
     <div class="text-center mb-4">
-        <img src="<?= asset_url('img/logo-salvamont.svg') ?>" alt="Salvamont Zărnești" height="72">
+        <img src="<?= logo_url() ?>" alt="Salvamont Zărnești" height="72">
         <h1 class="h4 mt-3 mb-0">Configurare inițială</h1>
         <p class="text-muted">Creați primul cont de administrator</p>
     </div>

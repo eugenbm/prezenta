@@ -65,50 +65,65 @@ de hosting).
 
 ---
 
-## 6. Configurarea fișierului `.env`
+## 6. Configurarea fișierului `config.php`
 
-Aplicația citește configurația (baza de date, adresa aplicației) dintr-un
-fișier `.env` aflat **la rădăcina proiectului** (nu în `public/`).
+Aplicația citește configurația (baza de date, adresa aplicației, sigla) dintr-un
+fișier `config.php` aflat **direct la rădăcina proiectului, în afara
+`public_html`** (niciodată în `public/`).
 
-1. În arhiva aplicației, copiați fișierul `.env.example` și redenumiți-l în
-   `.env`.
+1. În arhiva aplicației, copiați fișierul `config.example.php` și
+   redenumiți-l în `config.php` (același folder, rădăcina proiectului).
 2. Deschideți-l cu un editor de text simplu (Notepad, TextEdit — nu Word) și
    completați:
 
+   ```php
+   <?php
+   return [
+       'app' => [
+           'name' => 'Salvamont Zărnești',
+           'base_url' => '/registru/public',
+           'logo_path' => '/assets/img/logo/salvamont-placeholder.svg',
+       ],
+       'db' => [
+           'host' => 'localhost',
+           'database' => 'cpanelusername_registru',
+           'username' => 'cpanelusername_registru',
+           'password' => 'parola-generata-la-pasul-3',
+           'charset' => 'utf8mb4',
+       ],
+       'roles' => [
+           'applicant',
+           'admin',
+       ],
+   ];
    ```
-   APP_ENV=production
-   APP_DEBUG=false
-   APP_URL=https://domeniultau.ro/registru
-   APP_TIMEZONE=Europe/Bucharest
 
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_NAME=cpanelusername_registru
-   DB_USER=cpanelusername_registru_app
-   DB_PASS=parola-generata-la-pasul-3
+   - `db.host` este aproape întotdeauna `localhost` pe hosting shared.
+   - `db.database` / `db.username` conțin prefixul contului cPanel (ex.
+     `cpanelusername_registru`), nu doar numele scurt.
+   - `app.base_url` trebuie să reflecte calea reală din browser către folderul
+     `public/` al aplicației (vezi pasul 9), ex. `/registru/public` dacă site-ul
+     este la `https://domeniultau.ro/registru/public/...`, sau gol (`''`) dacă
+     aplicația este chiar la rădăcina domeniului.
+   - `app.logo_path` este calea relativă la `app.base_url` unde se află sigla
+     (implicit `public/assets/img/logo/salvamont-placeholder.svg`).
+   - **Nu ștergeți/redenumiți cheia `roles`** — este folosită de aplicație
+     pentru validarea rolurilor la crearea/editarea conturilor.
 
-   APP_KEY=un-sir-aleator-lung-de-cel-putin-32-caractere
-   ```
-
-   - `DB_HOST` este aproape întotdeauna `localhost` pe hosting shared.
-   - `APP_URL` trebuie să reflecte adresa reală (domeniu sau subfolder, vezi
-     pasul 9).
-   - `APP_KEY` — generați un șir aleator lung (de exemplu folosind un
-     generator de parole online sau `Password Generator` din cPanel) și
-     puneți-l aici; nu îl distribuiți.
-
-3. **Nu urcați niciodată `.env` în locuri publice** (de exemplu în interiorul
-   `public/`) și nu îl distribuiți prin email necriptat.
+3. **Nu urcați niciodată `config.php` în locuri publice** (de exemplu în
+   interiorul `public/`) și nu îl distribuiți prin email necriptat — conține
+   parola bazei de date. Fișierul este deja exclus din control de versiuni
+   prin `.gitignore`.
 
 ## 7. Configurarea conexiunii la baza de date
 
-Nu este nevoie de alt fișier — conexiunea este citită automat din `.env` prin
-`config/config.php`. Este suficient ca pașii 2-6 de mai sus să fie corecți.
+Nu este nevoie de alt fișier — conexiunea este citită automat din `config.php`
+(secțiunea `db`). Este suficient ca pașii 2-6 de mai sus să fie corecți.
 
 Dacă întâmpinați eroarea „Eroare de conectare la baza de date”, verificați:
-- `DB_NAME`, `DB_USER` conțin prefixul contului cPanel (ex.
+- `db.database` / `db.username` conțin prefixul contului cPanel (ex.
   `cpanelusername_registru`), nu doar numele scurt.
-- Parola din `.env` este exact cea setată la pasul 3 (fără spații în plus).
+- Parola din `config.php` este exact cea setată la pasul 3 (fără spații în plus).
 - Utilizatorul are privilegii pe baza de date (pasul 4).
 
 ---
@@ -117,7 +132,7 @@ Dacă întâmpinați eroarea „Eroare de conectare la baza de date”, verifica
 
 **Recomandat: încărcați proiectul într-un folder din afara `public_html`**
 (de exemplu `~/registru_app`), iar publicul va vedea doar folderul `public/`
-din interior (vezi pasul 9). Astfel codul sursă, `.env` și baza de date SQL
+din interior (vezi pasul 9). Astfel codul sursă, `config.php` și baza de date SQL
 nu sunt niciodată accesibile direct din browser.
 
 1. Arhivați local întregul proiect într-un fișier `.zip`.
@@ -127,7 +142,7 @@ nu sunt niciodată accesibile direct din browser.
 4. Intrați în folder, **Upload** → alegeți arhiva `.zip`.
 5. După încărcare, selectați arhiva → click dreapta → **Extract**.
 6. Verificați că structura rezultată conține direct `app/`, `public/`,
-   `config/`, `database/`, `.env`, `autoload.php` etc. (nu un folder
+   `config.php`, `database/`, `autoload.php` etc. (nu un folder
    intermediar suplimentar — dacă arhiva a creat un folder în plus, mutați
    conținutul un nivel mai sus).
 
@@ -150,7 +165,7 @@ sau preferați o cale de tip `domeniu.ro/registru`:
 1. În `public_html`, creați un folder `registru`.
 2. Copiați **conținutul** folderului `public/` din proiect (nu folderul
    `public/` în sine) direct în `public_html/registru/`.
-3. Restul proiectului (`app/`, `config/`, `database/`, `.env`, `autoload.php`)
+3. Restul proiectului (`app/`, `config.php`, `database/`, `autoload.php`)
    rămâne în afara `public_html`, la același nivel ca înainte (ex.
    `~/registru_app/`).
 4. Deoarece `public/index.php` face referire la restul proiectului printr-o
@@ -160,7 +175,7 @@ sau preferați o cale de tip `domeniu.ro/registru`:
    - `require dirname(__DIR__) . '/autoload.php';`
 
    astfel încât `dirname(__DIR__)` să indice corect spre `~/registru_app`
-   (folderul care conține `autoload.php` și `config/`). Dacă structura de
+   (folderul care conține `autoload.php` și `config.php`). Dacă structura de
    foldere e păstrată identică (`registru_app/public/...` copiat ca atare,
    doar link-uit/simlink-uit ca `public_html/registru`), nu e nevoie de nicio
    modificare. **Cel mai simplu și sigur este să evitați copierea separată și
@@ -170,8 +185,8 @@ sau preferați o cale de tip `domeniu.ro/registru`:
    din cPanel, solicitați acest lucru suportului tehnic al furnizorului de
    hosting (este o operație obișnuită, fără nevoie de SSH din partea
    dumneavoastră).
-5. Actualizați `APP_URL` din `.env` cu adresa reală, ex.
-   `https://domeniultau.ro/registru`.
+5. Actualizați `app.base_url` din `config.php` cu calea reală, ex.
+   `/registru/public`.
 
 ---
 
@@ -181,7 +196,7 @@ Din **File Manager**, selectați fișierele/folderele și **Change Permissions**
 
 - Foldere: `755`
 - Fișiere PHP: `644`
-- Fișierul `.env`: `600` (sau `640`, dacă serverul rulează PHP prin alt
+- Fișierul `config.php`: `600` (sau `640`, dacă serverul rulează PHP prin alt
   utilizator) — trebuie să fie citibil doar de contul aplicației.
 - Folderul `storage/logs/`: `755` (folderul trebuie să fie scriabil de PHP;
   dacă aplicația nu poate scrie erori acolo, treceți temporar la `775` doar
@@ -260,12 +275,12 @@ Din **File Manager**, selectați fișierele/folderele și **Change Permissions**
 
 | Simptom | Cauză probabilă | Soluție |
 |---|---|---|
-| „Eroare de conectare la baza de date” | Date greșite în `.env` | Verificați `DB_NAME`/`DB_USER` (cu prefixul contului), `DB_PASS`, `DB_HOST=localhost` |
-| Pagină albă (fără mesaj) | `APP_DEBUG=false` ascunde eroarea | Setați temporar `APP_DEBUG=true` în `.env`, reîncărcați pagina, apoi reveniți la `false` după depanare |
+| „Eroare de conectare la baza de date” | Date greșite în `config.php` | Verificați `db.database`/`db.username` (cu prefixul contului), `db.password`, `db.host=localhost` |
+| Pagină albă (fără mesaj) | `debug` lipsește/e `false` în `config.php`, ascunde eroarea | Adăugați temporar `'debug' => true` în secțiunea `app` din `config.php`, reîncărcați pagina, apoi reveniți la `false` după depanare |
 | Eroare 500 la orice pagină | Versiune PHP prea veche sau extensie lipsă | Verificați PHP 8.1+ activ și extensiile `pdo_mysql`, `mbstring` (pasul 1) |
 | „View-ul ... nu a fost găsit” | Arhivă extrasă incomplet / folder lipsă | Reîncărcați arhiva completă, verificați că `app/views/` există cu toate subfolderele |
 | 404 la orice `?route=...` | Document root greșit | Document root-ul trebuie să fie folderul `public/`, nu rădăcina proiectului (pasul 9) |
-| Sigla nu apare | Fișierul placeholder a fost șters fără înlocuire | Adăugați `public/assets/img/logo-salvamont.svg` (păstrați numele) |
+| Sigla nu apare | Fișierul placeholder a fost șters fără înlocuire, sau `app.logo_path` din `config.php` nu se potrivește | Adăugați fișierul la calea indicată de `app.logo_path` din `config.php` |
 | „Configurarea inițială a fost deja finalizată” la `?route=setup` | Există deja un cont admin | Folosiți login-ul normal; dacă parola s-a pierdut, resetați direct din phpMyAdmin (vezi mai jos) |
 | CSS-ul (culorile Salvamont) nu se încarcă | Blocaj CDN Bootstrap sau cache browser | Verificați conexiunea la internet a serverului/browserului; forțați reîncărcare completă (Ctrl+F5) |
 
@@ -295,6 +310,6 @@ pe rândul respectiv). Ștergeți apoi `hash.php` de pe server.
    comenzile SQL noi (nu reimportați schema completă peste o bază de date cu
    date existente, pentru a nu pierde informații).
 4. Încărcați fișierele noi în File Manager, suprascriind folderele `app/`,
-   `public/assets` etc., **păstrând neschimbat fișierul `.env`** și sigla
-   încărcată în `public/assets/img/`.
+   `public/assets` etc., **păstrând neschimbat fișierul `config.php`** și sigla
+   încărcată în `public/assets/img/logo/`.
 5. Testați autentificarea și fluxul de aprobare conform pasului 13.

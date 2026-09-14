@@ -33,9 +33,9 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Rol *</label>
-                <?php $selectedRole = $isEdit ? $editUser['role'] : old('role', 'aspirant'); ?>
+                <?php $selectedRole = $isEdit ? $editUser['role'] : old('role', 'applicant'); ?>
                 <select name="role" class="form-select <?= isset($errors['role']) ? 'is-invalid' : '' ?>" required>
-                    <option value="aspirant" <?= $selectedRole === 'aspirant' ? 'selected' : '' ?>>Aspirant</option>
+                    <option value="applicant" <?= $selectedRole === 'applicant' ? 'selected' : '' ?>>Aspirant</option>
                     <option value="admin" <?= $selectedRole === 'admin' ? 'selected' : '' ?>>Administrator</option>
                 </select>
                 <?php if (isset($errors['role'])): ?><div class="invalid-feedback"><?= e($errors['role']) ?></div><?php endif; ?>

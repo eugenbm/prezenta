@@ -306,7 +306,7 @@ final class Activity
                        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN a.duration_hours ELSE 0 END), 0) AS approved_hours
                 FROM users u
                 LEFT JOIN activities a ON " . implode(' AND ', $joinConditions) . "
-                WHERE u.role = 'aspirant'";
+                WHERE u.role = 'applicant'";
         $sql .= ' GROUP BY u.id, u.first_name, u.last_name ORDER BY u.last_name ASC, u.first_name ASC';
 
         $stmt = Database::connection()->prepare($sql);
