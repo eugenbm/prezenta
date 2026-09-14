@@ -1,0 +1,162 @@
+/*
+ * Salvamont Zărnești — Registru voluntari
+ * Paletă: roșu/portocaliu (identitate montan-salvare), fără albastru.
+ * Variabilele CSS de mai jos suprascriu paleta implicită Bootstrap 5 (--bs-primary etc.)
+ */
+
+:root {
+    --sv-primary: #b3202c;
+    --sv-primary-dark: #841821;
+    --sv-primary-light: #d94a34;
+    --sv-accent: #e07a1f;
+    --sv-dark: #241f1e;
+    --sv-bg: #f7f4f1;
+    --sv-success: #2e7d46;
+    --sv-warning: #c98a12;
+    --sv-danger: #b3202c;
+
+    --bs-primary: var(--sv-primary);
+    --bs-primary-rgb: 179, 32, 44;
+    --bs-link-color: var(--sv-primary);
+    --bs-link-hover-color: var(--sv-primary-dark);
+}
+
+body {
+    background: var(--sv-bg);
+    color: #2b2523;
+}
+
+/* --- Header / navigare ------------------------------------------------- */
+.app-header {
+    background: linear-gradient(120deg, var(--sv-dark), var(--sv-primary-dark));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+}
+
+.app-header .navbar-brand {
+    color: #fff;
+}
+
+.app-header .brand-text {
+    font-weight: 600;
+    line-height: 1.1;
+    font-size: .95rem;
+}
+
+.app-header .nav-link {
+    color: rgba(255, 255, 255, .85);
+    font-weight: 500;
+}
+
+.app-header .nav-link:hover,
+.app-header .nav-link.active {
+    color: #fff;
+}
+
+/* --- Footer -------------------------------------------------------------*/
+.app-footer {
+    background: var(--sv-dark);
+    color: rgba(255, 255, 255, .75);
+    margin-top: 3rem;
+}
+
+/* --- Butoane / linkuri ---------------------------------------------------*/
+.btn-primary {
+    --bs-btn-bg: var(--sv-primary);
+    --bs-btn-border-color: var(--sv-primary);
+    --bs-btn-hover-bg: var(--sv-primary-dark);
+    --bs-btn-hover-border-color: var(--sv-primary-dark);
+    --bs-btn-active-bg: var(--sv-primary-dark);
+    --bs-btn-active-border-color: var(--sv-primary-dark);
+    --bs-btn-focus-shadow-rgb: 179, 32, 44;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--sv-primary);
+    --bs-btn-border-color: var(--sv-primary);
+    --bs-btn-hover-bg: var(--sv-primary);
+    --bs-btn-hover-border-color: var(--sv-primary);
+}
+
+/* --- Carduri / layout ----------------------------------------------------*/
+.card {
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: .6rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+}
+
+.card-header {
+    background: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid var(--sv-accent);
+}
+
+.filter-bar {
+    border-radius: .6rem;
+}
+
+/* --- Statistici dashboard -------------------------------------------------*/
+.stat-card {
+    background: #fff;
+    border-radius: .6rem;
+    padding: 1rem 1.25rem;
+    text-align: center;
+    border-top: 4px solid var(--sv-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.stat-card.stat-success { border-top-color: var(--sv-success); }
+.stat-card.stat-pending { border-top-color: var(--sv-warning); }
+.stat-card.stat-danger { border-top-color: var(--sv-danger); }
+.stat-card.stat-hours { border-top-color: var(--sv-accent); }
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--sv-dark);
+}
+
+.stat-label {
+    font-size: .8rem;
+    color: #6b625f;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+/* --- Badge-uri status -----------------------------------------------------*/
+.status-badge {
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .35em .65em;
+}
+
+.badge-approved { background-color: var(--sv-success); color: #fff; }
+.badge-pending { background-color: var(--sv-warning); color: #fff; }
+.badge-rejected { background-color: var(--sv-danger); color: #fff; }
+
+/* --- Pagina de autentificare -----------------------------------------------*/
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sv-dark), var(--sv-primary-dark));
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: #fff;
+    border-radius: .75rem;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+}
+
+/* --- Tabele -----------------------------------------------------------------*/
+.table thead {
+    background: #f2ece9;
+}
+
+@media (max-width: 767.98px) {
+    .app-header .brand-text { display: none; }
+}

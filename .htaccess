@@ -1,0 +1,13 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Blochează accesul direct la fișiere de configurare sau date, dacă ajung aici din greșeală.
+<FilesMatch "\.(env|sql|log|md)$">
+    Require all denied
+</FilesMatch>
