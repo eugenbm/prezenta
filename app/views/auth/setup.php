@@ -9,50 +9,67 @@
     <link href="<?= asset_url('css/style.css') ?>" rel="stylesheet">
 </head>
 <body class="auth-page">
-<div class="auth-card" style="max-width: 480px;">
-    <div class="text-center mb-4">
-        <img src="<?= logo_url() ?>" alt="Salvamont Zărnești" height="72">
-        <h1 class="h4 mt-3 mb-0">Configurare inițială</h1>
-        <p class="text-muted">Creați primul cont de administrator</p>
-    </div>
+<div class="auth-shell">
+    <aside class="auth-brand">
+        <div class="auth-brand-inner">
+            <img src="<?= logo_url() ?>" alt="<?= e(app_name()) ?>" class="auth-logo">
+            <h1 class="auth-brand-title"><?= e(app_name()) ?></h1>
+            <p class="auth-brand-tagline">Registru digital de activități ale voluntarilor</p>
+            <ul class="auth-brand-points">
+                <li>Configurare inițială, o singură dată</li>
+                <li>Contul creat aici primește automat rol de administrator</li>
+                <li>Pagina se dezactivează după crearea primului cont</li>
+            </ul>
+        </div>
+        <div class="auth-brand-mountains" aria-hidden="true"></div>
+    </aside>
 
-    <form method="post" action="<?= route_url('?route=setup') ?>" novalidate>
-        <?= csrf_field() ?>
-        <div class="row">
-            <div class="col-6 mb-3">
-                <label class="form-label">Prenume</label>
-                <input type="text" name="first_name" class="form-control <?= isset($errors['first_name']) ? 'is-invalid' : '' ?>" value="<?= old('first_name') ?>" required>
-                <?php if (isset($errors['first_name'])): ?><div class="invalid-feedback"><?= e($errors['first_name']) ?></div><?php endif; ?>
+    <section class="auth-form-panel">
+        <div class="auth-form-wrap" style="max-width: 460px;">
+            <div class="auth-card">
+                <h2 class="auth-form-title h4">Configurare inițială</h2>
+                <p class="auth-form-subtitle">Creați primul cont de administrator.</p>
+
+                <form method="post" action="<?= route_url('?route=setup') ?>" novalidate>
+                    <?= csrf_field() ?>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Prenume</label>
+                            <input type="text" name="first_name" class="form-control <?= isset($errors['first_name']) ? 'is-invalid' : '' ?>" value="<?= old('first_name') ?>" autocomplete="given-name" required>
+                            <?php if (isset($errors['first_name'])): ?><div class="invalid-feedback"><?= e($errors['first_name']) ?></div><?php endif; ?>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Nume</label>
+                            <input type="text" name="last_name" class="form-control <?= isset($errors['last_name']) ? 'is-invalid' : '' ?>" value="<?= old('last_name') ?>" autocomplete="family-name" required>
+                            <?php if (isset($errors['last_name'])): ?><div class="invalid-feedback"><?= e($errors['last_name']) ?></div><?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" value="<?= old('email') ?>" autocomplete="email" required>
+                        <?php if (isset($errors['email'])): ?><div class="invalid-feedback"><?= e($errors['email']) ?></div><?php endif; ?>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Utilizator</label>
+                        <input type="text" name="username" class="form-control <?= isset($errors['username']) ? 'is-invalid' : '' ?>" value="<?= old('username') ?>" autocomplete="username" required>
+                        <?php if (isset($errors['username'])): ?><div class="invalid-feedback"><?= e($errors['username']) ?></div><?php endif; ?>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Parolă (minim 10 caractere)</label>
+                        <input type="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" autocomplete="new-password" required>
+                        <?php if (isset($errors['password'])): ?><div class="invalid-feedback"><?= e($errors['password']) ?></div><?php endif; ?>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmare parolă</label>
+                        <input type="password" name="password_confirm" class="form-control <?= isset($errors['password_confirm']) ? 'is-invalid' : '' ?>" autocomplete="new-password" required>
+                        <?php if (isset($errors['password_confirm'])): ?><div class="invalid-feedback"><?= e($errors['password_confirm']) ?></div><?php endif; ?>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Creează contul de administrator</button>
+                </form>
             </div>
-            <div class="col-6 mb-3">
-                <label class="form-label">Nume</label>
-                <input type="text" name="last_name" class="form-control <?= isset($errors['last_name']) ? 'is-invalid' : '' ?>" value="<?= old('last_name') ?>" required>
-                <?php if (isset($errors['last_name'])): ?><div class="invalid-feedback"><?= e($errors['last_name']) ?></div><?php endif; ?>
-            </div>
+            <p class="auth-footnote">Această pagină se dezactivează automat după crearea primului administrator.</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" value="<?= old('email') ?>" required>
-            <?php if (isset($errors['email'])): ?><div class="invalid-feedback"><?= e($errors['email']) ?></div><?php endif; ?>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Utilizator</label>
-            <input type="text" name="username" class="form-control <?= isset($errors['username']) ? 'is-invalid' : '' ?>" value="<?= old('username') ?>" required>
-            <?php if (isset($errors['username'])): ?><div class="invalid-feedback"><?= e($errors['username']) ?></div><?php endif; ?>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Parolă (minim 10 caractere)</label>
-            <input type="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" required>
-            <?php if (isset($errors['password'])): ?><div class="invalid-feedback"><?= e($errors['password']) ?></div><?php endif; ?>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Confirmare parolă</label>
-            <input type="password" name="password_confirm" class="form-control <?= isset($errors['password_confirm']) ? 'is-invalid' : '' ?>" required>
-            <?php if (isset($errors['password_confirm'])): ?><div class="invalid-feedback"><?= e($errors['password_confirm']) ?></div><?php endif; ?>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Creează contul de administrator</button>
-    </form>
-    <p class="text-center text-muted small mt-4 mb-0">Această pagină se dezactivează automat după crearea primului administrator.</p>
+    </section>
 </div>
 </body>
 </html>

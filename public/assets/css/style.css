@@ -136,20 +136,216 @@ body {
 /* --- Pagina de autentificare -----------------------------------------------*/
 .auth-page {
     min-height: 100vh;
+    background: var(--sv-bg);
+}
+
+.auth-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 992px) {
+    .auth-shell {
+        flex-direction: row;
+    }
+}
+
+/* Panoul instituțional (stânga pe desktop, banner compact pe mobil) */
+.auth-brand {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, var(--sv-dark) 0%, var(--sv-primary-dark) 55%, var(--sv-primary) 100%);
+    color: #fff;
+    padding: 2rem 1.5rem 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.auth-brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .07), transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(255, 255, 255, .06), transparent 45%);
+}
+
+.auth-brand-mountains {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, .07);
+    clip-path: polygon(0% 100%, 0% 65%, 15% 85%, 30% 45%, 45% 78%, 60% 35%, 75% 72%, 90% 48%, 100% 68%, 100% 100%);
+}
+
+.auth-brand-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.auth-logo {
+    height: 56px;
+    width: auto;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25));
+}
+
+.auth-brand-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin: 1rem 0 .35rem;
+    letter-spacing: .01em;
+}
+
+.auth-brand-tagline {
+    color: rgba(255, 255, 255, .85);
+    font-size: .95rem;
+    margin-bottom: 1.25rem;
+}
+
+.auth-brand-points {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+.auth-brand-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    font-size: .88rem;
+    color: rgba(255, 255, 255, .85);
+    margin-bottom: .6rem;
+}
+
+.auth-brand-points li::before {
+    content: '';
+    flex: 0 0 auto;
+    width: .5rem;
+    height: .5rem;
+    margin-top: .35rem;
+    border-radius: 50%;
+    background: var(--sv-accent);
+}
+
+@media (min-width: 992px) {
+    .auth-brand {
+        flex: 0 0 44%;
+        max-width: 560px;
+        padding: 3rem;
+    }
+
+    .auth-brand-title { font-size: 1.85rem; }
+    .auth-brand-points { display: block; }
+}
+
+/* Panoul cu formular */
+.auth-form-panel {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--sv-dark), var(--sv-primary-dark));
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.25rem;
+    background: var(--sv-bg);
+}
+
+.auth-form-wrap {
+    width: 100%;
+    max-width: 400px;
 }
 
 .auth-card {
     background: #fff;
-    border-radius: .75rem;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+    border-radius: .9rem;
+    padding: 2rem 1.75rem;
+    box-shadow: 0 12px 32px rgba(36, 31, 30, .1);
+    border-top: 4px solid var(--sv-primary);
+}
+
+@media (min-width: 576px) {
+    .auth-card { padding: 2.5rem; }
+}
+
+.auth-form-title {
+    font-weight: 700;
+    color: var(--sv-dark);
+    margin-bottom: .25rem;
+}
+
+.auth-form-subtitle {
+    color: #6b625f;
+    font-size: .92rem;
+    margin-bottom: 1.5rem;
+}
+
+.auth-page .form-control {
+    min-height: 46px;
+    font-size: 1rem;
+}
+
+.auth-page .form-control:focus {
+    border-color: var(--sv-primary);
+    box-shadow: 0 0 0 .2rem rgba(179, 32, 44, .15);
+}
+
+.auth-page .btn-primary {
+    min-height: 46px;
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2.75rem;
+    border: 0;
+    background: transparent;
+    color: #6b625f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover,
+.password-toggle:focus {
+    color: var(--sv-primary);
+}
+
+.auth-footnote {
+    color: #6b625f;
+    font-size: .82rem;
+    text-align: center;
+    margin: 1.5rem 0 0;
+}
+
+.auth-secure-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    color: #6b625f;
+    font-size: .78rem;
+    margin-top: .75rem;
+}
+
+@media (max-width: 991.98px) {
+    .auth-brand {
+        padding: 1.75rem 1.25rem 2.5rem;
+        text-align: center;
+    }
+
+    .auth-brand-inner { margin: 0 auto; }
 }
 
 /* --- Tabele -----------------------------------------------------------------*/
