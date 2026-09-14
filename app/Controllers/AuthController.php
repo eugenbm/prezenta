@@ -20,7 +20,7 @@ final class AuthController extends Controller
             return;
         }
 
-        $this->render('auth/login');
+        $this->renderStandalone('auth/login');
     }
 
     private function handleLogin(): void

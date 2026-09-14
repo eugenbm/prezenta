@@ -26,7 +26,7 @@ final class SetupController extends Controller
             return;
         }
 
-        $this->render('auth/setup');
+        $this->renderStandalone('auth/setup');
     }
 
     private function handleCreate(): void

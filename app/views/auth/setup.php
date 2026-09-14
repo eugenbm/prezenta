@@ -9,11 +9,14 @@
     <link href="<?= asset_url('css/style.css') ?>" rel="stylesheet">
 </head>
 <body class="auth-page">
+<div class="auth-topbar">Sistem oficial de evidență a voluntarilor &middot; Salvamont Zărnești</div>
+
+<main class="auth-main">
 <div class="auth-wrap" style="max-width: 460px;">
     <img src="<?= logo_url() ?>" alt="<?= e(app_name()) ?>" class="auth-logo">
 
     <div class="auth-card">
-        <h1 class="auth-title h4">Configurare inițială</h1>
+        <h1 class="auth-title">Configurare inițială</h1>
         <p class="auth-subtitle">Creați primul cont de administrator</p>
 
         <form method="post" action="<?= route_url('?route=setup') ?>" novalidate>
@@ -56,5 +59,6 @@
 
     <p class="auth-footnote">Această pagină se dezactivează automat după crearea primului administrator.</p>
 </div>
+</main>
 </body>
 </html>

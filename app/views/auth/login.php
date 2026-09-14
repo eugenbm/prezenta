@@ -9,12 +9,15 @@
     <link href="<?= asset_url('css/style.css') ?>" rel="stylesheet">
 </head>
 <body class="auth-page">
+<div class="auth-topbar">Sistem oficial de evidență a voluntarilor &middot; Salvamont Zărnești</div>
+
+<main class="auth-main">
 <div class="auth-wrap">
     <img src="<?= logo_url() ?>" alt="<?= e(app_name()) ?>" class="auth-logo">
 
     <div class="auth-card">
-        <h1 class="auth-title h4"><?= e(app_name()) ?></h1>
-        <p class="auth-subtitle">Registru digital de activități — Autentificare</p>
+        <h1 class="auth-title"><?= e(app_name()) ?></h1>
+        <p class="auth-subtitle">Registru digital de activități ale voluntarilor</p>
 
         <?php foreach (($flash['error'] ?? []) as $message): ?>
             <div class="alert alert-danger"><?= e($message) ?></div>
@@ -49,6 +52,7 @@
 
     <p class="auth-footnote">Conturile sunt create exclusiv de administrator.</p>
 </div>
+</main>
 
 <script>
     (function () {

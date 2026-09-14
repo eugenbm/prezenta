@@ -33,6 +33,27 @@ abstract class Controller
         require $viewPath;
     }
 
+    /**
+     * La fel ca render(), dar fără layout-ul principal (header/navbar/footer) —
+     * pentru pagini de sine stătătoare (autentificare, configurare inițială),
+     * care sunt deja documente HTML complete.
+     */
+    protected function renderStandalone(string $view, array $data = []): void
+    {
+        $viewPath = dirname(__DIR__) . '/views/' . $view . '.php';
+        if (!is_file($viewPath)) {
+            throw new \RuntimeException("View-ul '{$view}' nu a fost găsit la {$viewPath}.");
+        }
+
+        $flash = flash_get_all();
+        $errors = get_errors();
+        $currentUser = current_user();
+
+        extract($data, EXTR_SKIP);
+        require $viewPath;
+        clear_old();
+    }
+
     protected function redirect(string $url): never
     {
         redirect($url);
