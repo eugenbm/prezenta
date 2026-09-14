@@ -136,150 +136,48 @@ body {
 /* --- Pagina de autentificare -----------------------------------------------*/
 .auth-page {
     min-height: 100vh;
-    background: var(--sv-bg);
-}
-
-.auth-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-@media (min-width: 992px) {
-    .auth-shell {
-        flex-direction: row;
-    }
-}
-
-/* Panoul instituțional (stânga pe desktop, banner compact pe mobil) */
-.auth-brand {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(160deg, var(--sv-dark) 0%, var(--sv-primary-dark) 55%, var(--sv-primary) 100%);
-    color: #fff;
-    padding: 2rem 1.5rem 3.5rem;
-    display: flex;
-    align-items: center;
-}
-
-.auth-brand::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .07), transparent 40%),
-        radial-gradient(circle at 85% 75%, rgba(255, 255, 255, .06), transparent 45%);
-}
-
-.auth-brand-mountains {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 70px;
-    background: rgba(255, 255, 255, .07);
-    clip-path: polygon(0% 100%, 0% 65%, 15% 85%, 30% 45%, 45% 78%, 60% 35%, 75% 72%, 90% 48%, 100% 68%, 100% 100%);
-}
-
-.auth-brand-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 420px;
-    margin: 0 auto;
-}
-
-.auth-logo {
-    height: 56px;
-    width: auto;
-    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25));
-}
-
-.auth-brand-title {
-    font-weight: 700;
-    font-size: 1.5rem;
-    margin: 1rem 0 .35rem;
-    letter-spacing: .01em;
-}
-
-.auth-brand-tagline {
-    color: rgba(255, 255, 255, .85);
-    font-size: .95rem;
-    margin-bottom: 1.25rem;
-}
-
-.auth-brand-points {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: none;
-}
-
-.auth-brand-points li {
-    display: flex;
-    align-items: flex-start;
-    gap: .6rem;
-    font-size: .88rem;
-    color: rgba(255, 255, 255, .85);
-    margin-bottom: .6rem;
-}
-
-.auth-brand-points li::before {
-    content: '';
-    flex: 0 0 auto;
-    width: .5rem;
-    height: .5rem;
-    margin-top: .35rem;
-    border-radius: 50%;
-    background: var(--sv-accent);
-}
-
-@media (min-width: 992px) {
-    .auth-brand {
-        flex: 0 0 44%;
-        max-width: 560px;
-        padding: 3rem;
-    }
-
-    .auth-brand-title { font-size: 1.85rem; }
-    .auth-brand-points { display: block; }
-}
-
-/* Panoul cu formular */
-.auth-form-panel {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem 1.25rem;
     background: var(--sv-bg);
+    padding: 1.5rem 1rem;
 }
 
-.auth-form-wrap {
+.auth-wrap {
     width: 100%;
-    max-width: 400px;
+    max-width: 380px;
+}
+
+.auth-logo {
+    display: block;
+    height: 64px;
+    width: auto;
+    margin: 0 auto 1rem;
 }
 
 .auth-card {
     background: #fff;
-    border-radius: .9rem;
-    padding: 2rem 1.75rem;
-    box-shadow: 0 12px 32px rgba(36, 31, 30, .1);
-    border-top: 4px solid var(--sv-primary);
+    border-radius: .75rem;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(36, 31, 30, .08);
+    border-top: 3px solid var(--sv-primary);
 }
 
-@media (min-width: 576px) {
-    .auth-card { padding: 2.5rem; }
+@media (min-width: 400px) {
+    .auth-card { padding: 2.25rem 2rem; }
 }
 
-.auth-form-title {
+.auth-title {
     font-weight: 700;
     color: var(--sv-dark);
+    text-align: center;
     margin-bottom: .25rem;
 }
 
-.auth-form-subtitle {
+.auth-subtitle {
     color: #6b625f;
-    font-size: .92rem;
+    font-size: .9rem;
+    text-align: center;
     margin-bottom: 1.5rem;
 }
 
@@ -326,7 +224,7 @@ body {
     color: #6b625f;
     font-size: .82rem;
     text-align: center;
-    margin: 1.5rem 0 0;
+    margin: 1.25rem 0 0;
 }
 
 .auth-secure-note {
@@ -336,16 +234,7 @@ body {
     gap: .4rem;
     color: #6b625f;
     font-size: .78rem;
-    margin-top: .75rem;
-}
-
-@media (max-width: 991.98px) {
-    .auth-brand {
-        padding: 1.75rem 1.25rem 2.5rem;
-        text-align: center;
-    }
-
-    .auth-brand-inner { margin: 0 auto; }
+    margin-top: 1rem;
 }
 
 /* --- Tabele -----------------------------------------------------------------*/
