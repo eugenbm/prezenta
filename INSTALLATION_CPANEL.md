@@ -153,12 +153,11 @@ sau preferați o cale de tip `domeniu.ro/registru`:
 3. Restul proiectului (`app/`, `config/`, `database/`, `.env`, `autoload.php`)
    rămâne în afara `public_html`, la același nivel ca înainte (ex.
    `~/registru_app/`).
-4. Deoarece `public/index.php` face referire la fișiere prin căi relative de
-   tipul `dirname(__DIR__)`, dacă mutați doar conținutul lui `public/` în
-   `public_html/registru`, trebuie să ajustați cele două căi din
-   `index.php`:
+4. Deoarece `public/index.php` face referire la restul proiectului printr-o
+   cale relativă de tipul `dirname(__DIR__) . '/autoload.php'`, dacă mutați
+   doar conținutul lui `public/` în `public_html/registru`, trebuie să
+   ajustați această cale din `index.php`:
    - `require dirname(__DIR__) . '/autoload.php';`
-   - `require dirname(__DIR__) . '/config/config.php';`
 
    astfel încât `dirname(__DIR__)` să indice corect spre `~/registru_app`
    (folderul care conține `autoload.php` și `config/`). Dacă structura de

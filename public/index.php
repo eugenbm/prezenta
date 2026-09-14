@@ -11,11 +11,11 @@ require dirname(__DIR__) . '/autoload.php';
 
 use App\Core\App;
 
-$config = require dirname(__DIR__) . '/config/config.php';
+// config() (definit în app/Core/helpers.php) încarcă fișierul o singură dată
+// și îl păstrează în cache — nu necesită un require separat aici.
+date_default_timezone_set((string) config('app.timezone', 'Europe/Bucharest'));
 
-date_default_timezone_set($config['app']['timezone']);
-
-if ($config['app']['debug']) {
+if (config('app.debug')) {
     ini_set('display_errors', '1');
     error_reporting(E_ALL);
 } else {
