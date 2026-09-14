@@ -62,12 +62,14 @@ final class AuthController extends Controller
     private function isLockedOut(string $username): bool
     {
         $db = \App\Core\Database::connection();
+        // Constanta LOCKOUT_SECONDS e interpolată direct (nu ca parametru legat):
+        // unele versiuni MySQL nu acceptă un placeholder ca durată în INTERVAL.
+        $seconds = (int) self::LOCKOUT_SECONDS;
         $stmt = $db->prepare(
             "SELECT COUNT(*) FROM login_attempts
-             WHERE username = :username AND success = 0 AND attempted_at > (NOW() - INTERVAL :seconds SECOND)"
+             WHERE username = :username AND success = 0 AND attempted_at > (NOW() - INTERVAL {$seconds} SECOND)"
         );
         $stmt->bindValue('username', $username);
-        $stmt->bindValue('seconds', self::LOCKOUT_SECONDS, \PDO::PARAM_INT);
         $stmt->execute();
         return (int) $stmt->fetchColumn() >= self::MAX_ATTEMPTS;
     }
