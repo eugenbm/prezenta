@@ -48,6 +48,7 @@
             $exportQuery = $exportParams ? '&' . http_build_query($exportParams) : '';
         ?>
         <a href="<?= route_url('?route=admin/reports/export-csv' . $exportQuery) ?>" class="btn btn-sm btn-outline-primary">Exportă CSV</a>
+        <a href="<?= route_url('?route=admin/reports/print' . $exportQuery) ?>" class="btn btn-sm btn-outline-secondary" target="_blank">Vizualizează / Exportă PDF</a>
     </div>
 </form>
 

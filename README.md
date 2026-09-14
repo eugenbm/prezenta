@@ -45,7 +45,9 @@ activități administrative etc. Conturile sunt create exclusiv de administrator
   încă în așteptare, vede un sumar propriu (ore aprobate, statistici).
 - **Administrator** — creează/dezactivează/reactivează conturi, resetează
   parole, vede și filtrează toate activitățile, aprobă sau respinge (cu motiv),
-  corectează activități, generează rapoarte și exportă CSV.
+  corectează activități, generează rapoarte și exportă CSV sau o versiune
+  printabilă (folosind funcția „Print → Salvează ca PDF” a browserului, fără
+  a necesita nicio bibliotecă PHP suplimentară pe hosting).
 
 Un voluntar nu își poate aproba/respinge propria activitate, chiar dacă are
 și rol de administrator.

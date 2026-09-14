@@ -359,4 +359,32 @@ final class AdminController extends Controller
         fclose($out);
         exit;
     }
+
+    /**
+     * Versiune printabilă a raportului (fără layout/navigare), destinată
+     * exportului în PDF prin funcția „Print” / „Salvează ca PDF” a browserului
+     * — nu necesită nicio bibliotecă PHP suplimentară pe hosting.
+     */
+    public function printReport(): void
+    {
+        $filters = [
+            'user_id' => $_GET['user_id'] ?? '',
+            'activity_type_id' => $_GET['activity_type_id'] ?? '',
+            'status' => $_GET['status'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+        ];
+
+        $activities = Activity::listForAdmin(array_filter($filters));
+        $totalHours = 0.0;
+        $totalApproved = 0;
+        foreach ($activities as $activity) {
+            if ($activity['status'] === 'approved') {
+                $totalApproved++;
+                $totalHours += (float) ($activity['duration_hours'] ?? 0);
+            }
+        }
+
+        $this->renderPartialView('admin/report_print', compact('activities', 'filters', 'totalHours', 'totalApproved'));
+    }
 }

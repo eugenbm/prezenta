@@ -40,6 +40,7 @@ final class App
         'admin/activity/reject' => [AdminController::class, 'rejectActivity', 'admin'],
         'admin/reports' => [AdminController::class, 'reports', 'admin'],
         'admin/reports/export-csv' => [AdminController::class, 'exportCsv', 'admin'],
+        'admin/reports/print' => [AdminController::class, 'printReport', 'admin'],
     ];
 
     public function run(): void
