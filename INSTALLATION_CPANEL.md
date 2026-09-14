@@ -68,11 +68,17 @@ de hosting).
 ## 6. Configurarea fișierului `config.php`
 
 Aplicația citește configurația (baza de date, adresa aplicației, sigla) dintr-un
-fișier `config.php` aflat **direct la rădăcina proiectului, în afara
-`public_html`** (niciodată în `public/`).
+fișier `config.php`, care trebuie să se afle **în afara `public_html`**
+(niciodată în `public/`). Aplicația îl caută automat fie **lângă `autoload.php`**
+(rădăcina proiectului), fie **într-un folder părinte al proiectului** (de
+exemplu direct în rădăcina contului de hosting, `/home/contul_tau`, dacă ați
+urcat proiectul într-un subfolder de acolo) — deci puteți alege oricare din
+cele două locații, în funcție de ce vă e mai comod.
 
 1. În arhiva aplicației, copiați fișierul `config.example.php` și
-   redenumiți-l în `config.php` (același folder, rădăcina proiectului).
+   redenumiți-l în `config.php`, punându-l fie în rădăcina proiectului
+   (lângă `autoload.php`), fie într-un folder părinte al proiectului (ex.
+   direct în `/home/contul_tau`).
 2. Deschideți-l cu un editor de text simplu (Notepad, TextEdit — nu Word) și
    completați:
 
@@ -275,6 +281,7 @@ Din **File Manager**, selectați fișierele/folderele și **Change Permissions**
 
 | Simptom | Cauză probabilă | Soluție |
 |---|---|---|
+| „Fișierul de configurare config.php lipsește” | `config.php` nu a fost creat, sau e mai departe de 4 foldere părinte față de proiect | Copiați `config.example.php` ca `config.php`, fie lângă `autoload.php`, fie într-un folder părinte apropiat al proiectului (ex. rădăcina contului de hosting) |
 | „Eroare de conectare la baza de date” | Date greșite în `config.php` | Verificați `db.database`/`db.username` (cu prefixul contului), `db.password`, `db.host=localhost` |
 | Pagină albă (fără mesaj) | `debug` lipsește/e `false` în `config.php`, ascunde eroarea | Adăugați temporar `'debug' => true` în secțiunea `app` din `config.php`, reîncărcați pagina, apoi reveniți la `false` după depanare |
 | Eroare 500 la orice pagină | Versiune PHP prea veche sau extensie lipsă | Verificați PHP 8.1+ activ și extensiile `pdo_mysql`, `mbstring` (pasul 1) |

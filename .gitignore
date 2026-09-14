@@ -1,3 +1,6 @@
 /config.php
 .DS_Store
 storage/logs/*.log
+
+Archive.zip
+*.zip

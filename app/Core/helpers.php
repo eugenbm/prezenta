@@ -6,18 +6,45 @@ use App\Core\Auth;
 use App\Core\Csrf;
 
 /**
- * Returnează o valoare din configurația aplicației, citită din config.php
- * aflat direct sub rădăcina proiectului, în afara public_html.
+ * Caută config.php pornind din $startDir, apoi în părinții acestuia (maxim
+ * 4 niveluri mai sus), pentru a suporta atât instalări unde config.php stă
+ * lângă autoload.php, cât și instalări unde proiectul e într-un subfolder
+ * iar config.php e la rădăcina contului de hosting.
+ */
+function find_config_file(string $startDir): ?string
+{
+    $dir = rtrim($startDir, '/');
+    for ($i = 0; $i < 5; $i++) {
+        $candidate = $dir . '/config.php';
+        if (is_file($candidate)) {
+            return $candidate;
+        }
+        $parent = dirname($dir);
+        if ($parent === $dir) {
+            break;
+        }
+        $dir = $parent;
+    }
+
+    return null;
+}
+
+/**
+ * Returnează o valoare din configurația aplicației, citită din config.php.
+ * Caută config.php în folderul proiectului (lângă autoload.php) și, dacă nu
+ * există acolo, în părinții acestuia (ex. rădăcina contului de hosting, dacă
+ * proiectul a fost urcat într-un subfolder, cum ar fi /home/cont/config.php).
  * Ex: config('db.host') sau config('app') pentru toată secțiunea.
  */
 function config(string $key, mixed $default = null): mixed
 {
     static $config = null;
     if ($config === null) {
-        $path = dirname(__DIR__, 2) . '/config.php';
-        if (!is_file($path)) {
+        $projectRoot = dirname(__DIR__, 2);
+        $path = find_config_file($projectRoot);
+        if ($path === null) {
             http_response_code(500);
-            die('Fișierul de configurare config.php lipsește. Copiați config.example.php ca config.php și completați datele de conectare la baza de date.');
+            die('Fișierul de configurare config.php lipsește. Copiați config.example.php ca config.php în folderul proiectului sau într-un folder părinte al acestuia (ex. rădăcina contului de hosting) și completați datele de conectare la baza de date.');
         }
         $config = require $path;
     }
