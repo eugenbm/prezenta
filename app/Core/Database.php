@@ -30,10 +30,13 @@ final class Database
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ]);
             } catch (PDOException $e) {
-                // Nu expune niciodată detalii de conexiune (host/user/parolă) în producție.
+                // Nu expune niciodată parola în producție — doar mesajul PDO merge în log.
                 error_log('Eroare conexiune bază de date: ' . $e->getMessage());
-                http_response_code(500);
-                die('Eroare de conectare la baza de date. Contactați administratorul.');
+                if (!headers_sent()) {
+                    http_response_code(500);
+                }
+                render_fatal_error_page('Conectare eșuată la baza de date: ' . $e->getMessage());
+                exit;
             }
         }
 

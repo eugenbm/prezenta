@@ -98,6 +98,22 @@ function app_name(): string
     return (string) config('app.name', 'Salvamont Zărnești');
 }
 
+/**
+ * Afișează o pagină de eroare mereu vizibilă (niciodată goală), pentru orice
+ * eroare fatală/excepție neprinsă sau eșec de conectare la baza de date.
+ * Detaliile tehnice apar doar dacă app.debug este activat în config.php.
+ */
+function render_fatal_error_page(string $details): void
+{
+    $showDetails = config('app.debug') ? '<pre>' . htmlspecialchars($details, ENT_QUOTES, 'UTF-8') . '</pre>' : '';
+    echo '<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><title>Eroare</title></head>'
+        . '<body style="font-family:sans-serif;padding:2rem;max-width:640px;margin:auto;">'
+        . '<h1>A apărut o eroare neașteptată</h1>'
+        . '<p>Contactați administratorul aplicației. Detaliile au fost înregistrate în jurnalul serverului.</p>'
+        . $showDetails
+        . '</body></html>';
+}
+
 function redirect(string $url): never
 {
     header('Location: ' . $url, true, 302);
