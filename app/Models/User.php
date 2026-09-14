@@ -19,10 +19,12 @@ final class User
 
     public static function findByUsernameOrEmail(string $identifier): ?array
     {
+        // Placeholder-uri distincte pentru fiecare apariție: MySQL cu prepared
+        // statements native (fără emulare) nu acceptă același nume de două ori.
         $stmt = Database::connection()->prepare(
-            'SELECT * FROM users WHERE username = :identifier OR email = :identifier LIMIT 1'
+            'SELECT * FROM users WHERE username = :username OR email = :email LIMIT 1'
         );
-        $stmt->execute(['identifier' => $identifier]);
+        $stmt->execute(['username' => $identifier, 'email' => $identifier]);
         $row = $stmt->fetch();
         return $row ?: null;
     }
