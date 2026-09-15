@@ -1,3 +1,14 @@
+<?php
+    $route = $_GET['route'] ?? '';
+    $navActive = static function (array $needles) use ($route): string {
+        foreach ($needles as $needle) {
+            if (str_starts_with($route, $needle)) {
+                return 'active';
+            }
+        }
+        return '';
+    };
+?>
 <!DOCTYPE html>
 <html lang="ro">
 <head>
@@ -10,29 +21,38 @@
 </head>
 <body>
 <header class="app-header">
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg" data-bs-theme="dark">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="<?= route_url($currentUser ? ($currentUser['role'] === 'admin' ? '?route=admin/dashboard' : '?route=applicant/dashboard') : '?route=login') ?>">
                 <img src="<?= logo_url() ?>" alt="<?= e(app_name()) ?>" height="42">
                 <span class="brand-text"><?= e(app_name()) ?><br><small>Registru voluntari</small></span>
             </a>
             <?php if ($currentUser): ?>
-            <div class="d-flex align-items-center gap-3">
-                <ul class="navbar-nav flex-row gap-3">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Deschide meniul">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <?php if ($currentUser['role'] === 'admin'): ?>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=admin/dashboard') ?>">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=admin/activities') ?>">Activități</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=admin/users') ?>">Voluntari</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=admin/reports') ?>">Rapoarte</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['admin/dashboard']) ?>" href="<?= route_url('?route=admin/dashboard') ?>">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['admin/activities', 'admin/activity']) ?>" href="<?= route_url('?route=admin/activities') ?>">Activități</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['admin/case-sheet']) ?>" href="<?= route_url('?route=admin/case-sheets') ?>">Fișe de caz</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['admin/users']) ?>" href="<?= route_url('?route=admin/users') ?>">Voluntari</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['admin/reports']) ?>" href="<?= route_url('?route=admin/reports') ?>">Rapoarte</a></li>
                     <?php else: ?>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=applicant/dashboard') ?>">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=applicant/activities') ?>">Activitățile mele</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=applicant/activity/create') ?>">Adaugă activitate</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<?= route_url('?route=applicant/profile') ?>">Profil</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['applicant/dashboard']) ?>" href="<?= route_url('?route=applicant/dashboard') ?>">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['applicant/activities', 'applicant/activity/edit']) ?>" href="<?= route_url('?route=applicant/activities') ?>">Activitățile mele</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['applicant/activity/create']) ?>" href="<?= route_url('?route=applicant/activity/create') ?>">Adaugă activitate</a></li>
+                        <li class="nav-item"><a class="nav-link <?= $navActive(['applicant/profile']) ?>" href="<?= route_url('?route=applicant/profile') ?>">Profil</a></li>
                     <?php endif; ?>
                 </ul>
-                <span class="text-muted small d-none d-md-inline"><?= e($currentUser['first_name'] . ' ' . $currentUser['last_name']) ?></span>
-                <a href="<?= route_url('?route=logout') ?>" class="btn btn-sm btn-outline-light">Deconectare</a>
+                <div class="d-flex align-items-center flex-wrap gap-2 gap-lg-3 ms-lg-3 nav-user-group">
+                    <div class="user-chip">
+                        <span class="user-chip__avatar"><?= e(mb_strtoupper(mb_substr($currentUser['first_name'], 0, 1) . mb_substr($currentUser['last_name'], 0, 1))) ?></span>
+                        <span class="user-chip__name"><?= e($currentUser['first_name'] . ' ' . $currentUser['last_name']) ?></span>
+                    </div>
+                    <a href="<?= route_url('?route=logout') ?>" class="btn btn-sm btn-outline-light">Deconectare</a>
+                </div>
             </div>
             <?php endif; ?>
         </div>

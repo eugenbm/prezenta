@@ -41,23 +41,22 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <thead>
-                <tr><th>Data</th><th>Tip</th><th>Descriere</th><th>Ore</th><th>Status</th><th>Motiv respingere</th><th></th></tr>
+                <tr><th>Data</th><th>Tip</th><th>Descriere</th><th>Status</th><th>Motiv respingere</th><th></th></tr>
             </thead>
             <tbody>
             <?php if (!$activities): ?>
-                <tr><td colspan="7" class="text-center text-muted py-4">Nicio activitate găsită.</td></tr>
+                <tr><td colspan="6" class="cell-empty text-center text-muted py-4">Nicio activitate găsită.</td></tr>
             <?php endif; ?>
             <?php foreach ($activities as $activity): ?>
                 <tr>
-                    <td><?= format_date_ro($activity['activity_date']) ?></td>
-                    <td><?= e($activity['type_name']) ?></td>
-                    <td><?= e($activity['description']) ?></td>
-                    <td><?= $activity['duration_hours'] !== null ? number_format((float) $activity['duration_hours'], 1) : '—' ?></td>
-                    <td><?= status_badge($activity['status']) ?></td>
-                    <td class="text-danger small"><?= e($activity['rejection_reason'] ?? '') ?></td>
-                    <td>
+                    <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
+                    <td data-label="Tip"><?= e($activity['type_name']) ?></td>
+                    <td data-label="Descriere"><?= e($activity['description']) ?></td>
+                    <td data-label="Status"><?= status_badge($activity['status']) ?></td>
+                    <td data-label="Motiv respingere" class="text-danger small<?= empty($activity['rejection_reason']) ? ' d-none d-md-table-cell' : '' ?>"><?= e($activity['rejection_reason'] ?? '') ?></td>
+                    <td data-label="Acțiuni" class="cell-actions<?= $activity['status'] === 'pending' ? '' : ' d-none d-md-table-cell' ?>">
                         <?php if ($activity['status'] === 'pending'): ?>
                             <a href="<?= route_url('?route=applicant/activity/edit&id=' . $activity['id']) ?>" class="btn btn-sm btn-outline-secondary">Editează</a>
                         <?php endif; ?>

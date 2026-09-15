@@ -58,15 +58,14 @@
             <div class="card-header">Sumar pe tip de activitate</div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead><tr><th>Tip</th><th>Total</th><th>Aprobate</th><th>Ore aprobate</th></tr></thead>
+                <table class="table table-stack mb-0">
+                    <thead><tr><th>Tip</th><th>Total</th><th>Aprobate</th></tr></thead>
                     <tbody>
                     <?php foreach ($byType as $row): ?>
                         <tr>
-                            <td><?= e($row['type_name']) ?></td>
-                            <td><?= $row['total'] ?></td>
-                            <td><?= $row['approved'] ?></td>
-                            <td><?= number_format((float) $row['approved_hours'], 1) ?></td>
+                            <td data-label="Tip"><?= e($row['type_name']) ?></td>
+                            <td data-label="Total"><?= $row['total'] ?></td>
+                            <td data-label="Aprobate"><?= $row['approved'] ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -80,17 +79,29 @@
             <div class="card-header">Sumar pe voluntar</div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead><tr><th>Voluntar</th><th>Total</th><th>Aprobate</th><th>Așteptare</th><th>Respinse</th><th>Ore</th></tr></thead>
+                <table class="table table-stack mb-0">
+                    <thead><tr><th>Voluntar</th><th>Total</th><th>Aprobate</th><th>Așteptare</th><th>Respinse</th><th>Zile cu activitate</th><th>Obiectiv <?= $year ?></th></tr></thead>
                     <tbody>
                     <?php foreach ($byVolunteer as $row): ?>
+                        <?php
+                            $vDays = $annualDays[(int) $row['user_id']] ?? 0;
+                            $vPct = min(100, (int) round($vDays / max(1, $annualGoal) * 100));
+                        ?>
                         <tr>
-                            <td><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td>
-                            <td><?= $row['total'] ?></td>
-                            <td><?= $row['approved'] ?></td>
-                            <td><?= $row['pending'] ?></td>
-                            <td><?= $row['rejected'] ?></td>
-                            <td><?= number_format((float) $row['approved_hours'], 1) ?></td>
+                            <td data-label="Voluntar"><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                            <td data-label="Total"><?= $row['total'] ?></td>
+                            <td data-label="Aprobate"><?= $row['approved'] ?></td>
+                            <td data-label="Așteptare"><?= $row['pending'] ?></td>
+                            <td data-label="Respinse"><?= $row['rejected'] ?></td>
+                            <td data-label="Zile cu activitate"><?= $row['active_days'] ?></td>
+                            <td data-label="Obiectiv <?= $year ?>">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 120px;">
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar <?= $vDays >= $annualGoal ? 'bg-success' : '' ?>" role="progressbar" style="width: <?= $vPct ?>%"></div>
+                                    </div>
+                                    <span class="small text-nowrap"><?= $vDays ?>/<?= $annualGoal ?></span>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -105,21 +116,20 @@
     <div class="card-header">Detaliu activități (<?= count($activities) ?>)</div>
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <thead>
-                <tr><th>Voluntar</th><th>Data</th><th>Tip</th><th>Ore</th><th>Status</th></tr>
+                <tr><th>Voluntar</th><th>Data</th><th>Tip</th><th>Status</th></tr>
             </thead>
             <tbody>
             <?php if (!$activities): ?>
-                <tr><td colspan="5" class="text-center text-muted py-4">Nicio activitate găsită pentru filtrele selectate.</td></tr>
+                <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nicio activitate găsită pentru filtrele selectate.</td></tr>
             <?php endif; ?>
             <?php foreach ($activities as $activity): ?>
                 <tr>
-                    <td><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
-                    <td><?= format_date_ro($activity['activity_date']) ?></td>
-                    <td><?= e($activity['type_name']) ?></td>
-                    <td><?= $activity['duration_hours'] !== null ? number_format((float) $activity['duration_hours'], 1) : '—' ?></td>
-                    <td><?= status_badge($activity['status']) ?></td>
+                    <td data-label="Voluntar"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
+                    <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
+                    <td data-label="Tip"><?= e($activity['type_name']) ?></td>
+                    <td data-label="Status"><?= status_badge($activity['status']) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

@@ -27,22 +27,25 @@ final class Activity
 
     public static function create(array $data): int
     {
+        $status = $data['status'] ?? 'pending';
+        if (!in_array($status, ['pending', 'approved', 'rejected'], true)) {
+            $status = 'pending';
+        }
+
         $stmt = Database::connection()->prepare(
             'INSERT INTO activities
-                (user_id, activity_type_id, activity_date, start_time, end_time, duration_hours, location, description, notes, status)
+                (user_id, activity_type_id, activity_date, location, description, notes, status)
              VALUES
-                (:user_id, :activity_type_id, :activity_date, :start_time, :end_time, :duration_hours, :location, :description, :notes, "pending")'
+                (:user_id, :activity_type_id, :activity_date, :location, :description, :notes, :status)'
         );
         $stmt->execute([
             'user_id' => $data['user_id'],
             'activity_type_id' => $data['activity_type_id'],
             'activity_date' => $data['activity_date'],
-            'start_time' => $data['start_time'] ?: null,
-            'end_time' => $data['end_time'] ?: null,
-            'duration_hours' => $data['duration_hours'],
             'location' => $data['location'] ?: null,
             'description' => $data['description'],
             'notes' => $data['notes'] ?: null,
+            'status' => $status,
         ]);
 
         return (int) Database::connection()->lastInsertId();
@@ -54,9 +57,6 @@ final class Activity
             "UPDATE activities SET
                 activity_type_id = :activity_type_id,
                 activity_date = :activity_date,
-                start_time = :start_time,
-                end_time = :end_time,
-                duration_hours = :duration_hours,
                 location = :location,
                 description = :description,
                 notes = :notes
@@ -65,9 +65,6 @@ final class Activity
         $stmt->execute([
             'activity_type_id' => $data['activity_type_id'],
             'activity_date' => $data['activity_date'],
-            'start_time' => $data['start_time'] ?: null,
-            'end_time' => $data['end_time'] ?: null,
-            'duration_hours' => $data['duration_hours'],
             'location' => $data['location'] ?: null,
             'description' => $data['description'],
             'notes' => $data['notes'] ?: null,
@@ -84,9 +81,6 @@ final class Activity
             'UPDATE activities SET
                 activity_type_id = :activity_type_id,
                 activity_date = :activity_date,
-                start_time = :start_time,
-                end_time = :end_time,
-                duration_hours = :duration_hours,
                 location = :location,
                 description = :description,
                 notes = :notes
@@ -95,9 +89,6 @@ final class Activity
         $stmt->execute([
             'activity_type_id' => $data['activity_type_id'],
             'activity_date' => $data['activity_date'],
-            'start_time' => $data['start_time'] ?: null,
-            'end_time' => $data['end_time'] ?: null,
-            'duration_hours' => $data['duration_hours'],
             'location' => $data['location'] ?: null,
             'description' => $data['description'],
             'notes' => $data['notes'] ?: null,
@@ -215,6 +206,35 @@ final class Activity
         return $stmt->fetchAll();
     }
 
+    /** Numărul de zile calendaristice distincte cu activitate aprobată, într-un an. */
+    public static function approvedDaysInYear(int $userId, int $year): int
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT COUNT(DISTINCT activity_date) FROM activities
+             WHERE user_id = :user_id AND status = 'approved' AND YEAR(activity_date) = :year"
+        );
+        $stmt->execute(['user_id' => $userId, 'year' => $year]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** Hartă user_id => zile aprobate distincte în anul dat, pentru toți aspiranții. */
+    public static function approvedDaysInYearForApplicants(int $year): array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT user_id, COUNT(DISTINCT activity_date) AS days
+             FROM activities
+             WHERE status = 'approved' AND YEAR(activity_date) = :year
+             GROUP BY user_id"
+        );
+        $stmt->execute(['year' => $year]);
+
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $map[(int) $row['user_id']] = (int) $row['days'];
+        }
+        return $map;
+    }
+
     public static function countsForUser(int $userId): array
     {
         $stmt = Database::connection()->prepare(
@@ -240,23 +260,6 @@ final class Activity
         return $counts;
     }
 
-    public static function sumApprovedHoursForUser(int $userId): float
-    {
-        $stmt = Database::connection()->prepare(
-            "SELECT COALESCE(SUM(duration_hours), 0) FROM activities WHERE user_id = :user_id AND status = 'approved'"
-        );
-        $stmt->execute(['user_id' => $userId]);
-        return (float) $stmt->fetchColumn();
-    }
-
-    public static function sumApprovedHoursGlobal(): float
-    {
-        $stmt = Database::connection()->query(
-            "SELECT COALESCE(SUM(duration_hours), 0) FROM activities WHERE status = 'approved'"
-        );
-        return (float) $stmt->fetchColumn();
-    }
-
     public static function reportByType(array $filters = []): array
     {
         // Condițiile de dată merg în clauza ON (nu în WHERE), altfel LEFT JOIN
@@ -273,8 +276,7 @@ final class Activity
         }
 
         $sql = "SELECT t.name AS type_name, COUNT(a.id) AS total,
-                       SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) AS approved,
-                       COALESCE(SUM(CASE WHEN a.status = 'approved' THEN a.duration_hours ELSE 0 END), 0) AS approved_hours
+                       SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) AS approved
                 FROM activity_types t
                 LEFT JOIN activities a ON " . implode(' AND ', $joinConditions) . '
                 GROUP BY t.id, t.name ORDER BY t.name ASC';
@@ -303,10 +305,10 @@ final class Activity
                        SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) AS approved,
                        SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) AS pending,
                        SUM(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
-                       COALESCE(SUM(CASE WHEN a.status = 'approved' THEN a.duration_hours ELSE 0 END), 0) AS approved_hours
+                       COUNT(DISTINCT CASE WHEN a.status = 'approved' THEN a.activity_date END) AS active_days
                 FROM users u
                 LEFT JOIN activities a ON " . implode(' AND ', $joinConditions) . "
-                WHERE u.role = 'applicant'";
+                WHERE u.role <> 'admin'";
         $sql .= ' GROUP BY u.id, u.first_name, u.last_name ORDER BY u.last_name ASC, u.first_name ASC';
 
         $stmt = Database::connection()->prepare($sql);

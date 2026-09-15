@@ -15,21 +15,49 @@
     --sv-warning: #c98a12;
     --sv-danger: #b3202c;
 
+    --sv-surface: #ffffff;
+    --sv-border: #ece4df;
+    --sv-muted: #6b625f;
+    --sv-field-bg: #fbf9f7;
+    --sv-radius: .8rem;
+    --sv-radius-lg: 1.1rem;
+    --sv-shadow-sm: 0 1px 2px rgba(36, 31, 30, .05), 0 1px 3px rgba(36, 31, 30, .06);
+    --sv-shadow: 0 10px 24px -16px rgba(36, 31, 30, .28);
+    --sv-shadow-lg: 0 24px 50px -28px rgba(36, 31, 30, .38);
+
     --bs-primary: var(--sv-primary);
     --bs-primary-rgb: 179, 32, 44;
     --bs-link-color: var(--sv-primary);
     --bs-link-hover-color: var(--sv-primary-dark);
+    --bs-body-color: #2b2523;
+    --bs-border-color: var(--sv-border);
 }
 
 body {
-    background: var(--sv-bg);
+    background:
+        radial-gradient(1000px 520px at 100% -5%, rgba(179, 32, 44, .06), transparent 55%),
+        radial-gradient(820px 460px at -8% 108%, rgba(224, 122, 31, .06), transparent 55%),
+        var(--sv-bg);
+    background-attachment: fixed;
     color: #2b2523;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
 /* --- Header / navigare ------------------------------------------------- */
 .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
     background: linear-gradient(120deg, var(--sv-dark), var(--sv-primary-dark));
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+    border-bottom: 3px solid var(--sv-primary);
+    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, .45);
+}
+
+.app-header .navbar {
+    padding-top: .6rem;
+    padding-bottom: .6rem;
 }
 
 .app-header .navbar-brand {
@@ -37,29 +65,125 @@ body {
 }
 
 .app-header .brand-text {
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.1;
     font-size: .95rem;
+    letter-spacing: -.01em;
+}
+.app-header .brand-text small {
+    font-weight: 500;
+    opacity: .7;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
 }
 
 .app-header .nav-link {
-    color: rgba(255, 255, 255, .85);
+    color: rgba(255, 255, 255, .82);
+    font-weight: 500;
+    font-size: .92rem;
+    padding: .4rem .85rem;
+    border-radius: 999px;
+    transition: color .15s ease, background-color .15s ease;
+}
+.app-header .nav-link:hover,
+.app-header .nav-link:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+}
+.app-header .nav-link.active {
+    color: #fff;
+    background: rgba(255, 255, 255, .16);
+}
+
+/* Chip utilizator autentificat */
+.user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .3rem .8rem .3rem .35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: #fff;
+}
+.user-chip__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sv-primary-light), var(--sv-accent));
+    color: #fff;
+    font-weight: 700;
+    font-size: .78rem;
+    letter-spacing: .02em;
+}
+.user-chip__name {
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 1.1;
+}
+.app-header .btn-outline-light {
+    --bs-btn-border-color: rgba(255, 255, 255, .5);
+    --bs-btn-hover-bg: #fff;
+    --bs-btn-hover-color: var(--sv-primary-dark);
+    --bs-btn-hover-border-color: #fff;
+    border-radius: 999px;
     font-weight: 500;
 }
 
-.app-header .nav-link:hover,
-.app-header .nav-link.active {
-    color: #fff;
+.app-header .navbar-toggler {
+    border: 0;
+    padding: .35rem .5rem;
+}
+.app-header .navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* Meniul pliat pe mobil: separator subtil și spațiere confortabilă */
+@media (max-width: 991.98px) {
+    .app-header .navbar-collapse {
+        margin-top: .5rem;
+        padding-top: .5rem;
+        border-top: 1px solid rgba(255, 255, 255, .14);
+    }
+    .app-header .nav-link {
+        padding: .55rem .85rem;
+    }
+    .app-header .nav-user-group {
+        margin-top: .5rem;
+        padding-top: .75rem;
+        border-top: 1px solid rgba(255, 255, 255, .14);
+    }
 }
 
 /* --- Footer -------------------------------------------------------------*/
 .app-footer {
     background: var(--sv-dark);
-    color: rgba(255, 255, 255, .75);
+    color: rgba(255, 255, 255, .72);
     margin-top: 3rem;
+    border-top: 3px solid var(--sv-primary);
 }
 
 /* --- Butoane / linkuri ---------------------------------------------------*/
+.btn {
+    --bs-btn-border-radius: .6rem;
+    font-weight: 500;
+    letter-spacing: .01em;
+    transition: transform .12s ease, box-shadow .15s ease, filter .15s ease,
+                background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn-lg { --bs-btn-border-radius: .75rem; }
+.btn-sm { --bs-btn-border-radius: .5rem; }
+.btn:focus-visible {
+    outline: 3px solid rgba(179, 32, 44, .3);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
 .btn-primary {
     --bs-btn-bg: var(--sv-primary);
     --bs-btn-border-color: var(--sv-primary);
@@ -68,7 +192,10 @@ body {
     --bs-btn-active-bg: var(--sv-primary-dark);
     --bs-btn-active-border-color: var(--sv-primary-dark);
     --bs-btn-focus-shadow-rgb: 179, 32, 44;
+    background-image: linear-gradient(180deg, var(--sv-primary) 0%, var(--sv-primary-dark) 100%);
+    box-shadow: 0 10px 20px -12px rgba(179, 32, 44, .7);
 }
+.btn-primary:hover { filter: brightness(1.06); }
 
 .btn-outline-primary {
     --bs-btn-color: var(--sv-primary);
@@ -76,69 +203,145 @@ body {
     --bs-btn-hover-bg: var(--sv-primary);
     --bs-btn-hover-border-color: var(--sv-primary);
 }
+.btn-outline-secondary {
+    --bs-btn-color: #6b625f;
+    --bs-btn-border-color: #d8cfca;
+    --bs-btn-hover-bg: var(--sv-dark);
+    --bs-btn-hover-border-color: var(--sv-dark);
+    --bs-btn-hover-color: #fff;
+}
+.btn-success {
+    --bs-btn-bg: var(--sv-success);
+    --bs-btn-border-color: var(--sv-success);
+    --bs-btn-hover-bg: #1f6b39;
+    --bs-btn-hover-border-color: #1f6b39;
+}
+.btn-danger {
+    --bs-btn-bg: var(--sv-danger);
+    --bs-btn-border-color: var(--sv-danger);
+    --bs-btn-hover-bg: var(--sv-primary-dark);
+    --bs-btn-hover-border-color: var(--sv-primary-dark);
+}
+.btn-warning {
+    --bs-btn-bg: var(--sv-warning);
+    --bs-btn-border-color: var(--sv-warning);
+    --bs-btn-hover-bg: #b07a10;
+    --bs-btn-hover-border-color: #b07a10;
+}
 
 /* --- Carduri / layout ----------------------------------------------------*/
 .card {
-    border: 1px solid rgba(0, 0, 0, .08);
-    border-radius: .6rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    border: 1px solid var(--sv-border);
+    border-radius: var(--sv-radius-lg);
+    box-shadow: var(--sv-shadow-sm);
+    overflow: hidden;
 }
 
 .card-header {
+    position: relative;
     background: #fff;
-    font-weight: 600;
-    border-bottom: 2px solid var(--sv-accent);
+    font-weight: 700;
+    color: var(--sv-dark);
+    padding: .9rem 1.15rem .9rem 1.4rem;
+    border-bottom: 1px solid var(--sv-border);
+}
+.card-header::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .7rem;
+    bottom: .7rem;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(var(--sv-primary), var(--sv-accent));
+}
+
+.card-body {
+    padding: 1.15rem;
 }
 
 .filter-bar {
-    border-radius: .6rem;
+    border-radius: var(--sv-radius-lg);
+    background: #fff;
+    border: 1px solid var(--sv-border);
+    box-shadow: var(--sv-shadow-sm);
+}
+.filter-bar .form-label {
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--sv-muted);
+    margin-bottom: .3rem;
 }
 
 /* --- Statistici dashboard -------------------------------------------------*/
 .stat-card {
+    position: relative;
     background: #fff;
-    border-radius: .6rem;
-    padding: 1rem 1.25rem;
+    border: 1px solid var(--sv-border);
+    border-radius: var(--sv-radius-lg);
+    padding: 1.1rem 1.25rem;
     text-align: center;
-    border-top: 4px solid var(--sv-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    box-shadow: var(--sv-shadow-sm);
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.stat-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--sv-primary), var(--sv-primary-light));
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sv-shadow);
 }
 
-.stat-card.stat-success { border-top-color: var(--sv-success); }
-.stat-card.stat-pending { border-top-color: var(--sv-warning); }
-.stat-card.stat-danger { border-top-color: var(--sv-danger); }
-.stat-card.stat-hours { border-top-color: var(--sv-accent); }
+.stat-card.stat-success::before { background: linear-gradient(90deg, var(--sv-success), #4fa068); }
+.stat-card.stat-pending::before { background: linear-gradient(90deg, var(--sv-warning), #e0a83a); }
+.stat-card.stat-danger::before { background: linear-gradient(90deg, var(--sv-danger), var(--sv-primary-light)); }
+.stat-card.stat-hours::before { background: linear-gradient(90deg, var(--sv-accent), #f0a24a); }
 
 .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: clamp(1.6rem, 1.4rem + 1vw, 2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
     color: var(--sv-dark);
 }
 
 .stat-label {
-    font-size: .8rem;
-    color: #6b625f;
+    font-size: .76rem;
+    color: var(--sv-muted);
     text-transform: uppercase;
-    letter-spacing: .03em;
+    letter-spacing: .04em;
+    margin-top: .15rem;
 }
 
 /* --- Badge-uri status -----------------------------------------------------*/
 .status-badge {
-    font-size: .78rem;
+    font-size: .74rem;
     font-weight: 600;
-    padding: .35em .65em;
+    padding: .4em .7em;
+    border-radius: 999px;
+    letter-spacing: .01em;
 }
 
 .badge-approved { background-color: var(--sv-success); color: #fff; }
 .badge-pending { background-color: var(--sv-warning); color: #fff; }
 .badge-rejected { background-color: var(--sv-danger); color: #fff; }
 
-/* --- Pagina de autentificare -----------------------------------------------*/
+/* --- Pagini de autentificare (bază · folosită de pagina de configurare) ---- */
 .auth-page {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    background: var(--sv-bg);
+    background:
+        radial-gradient(1000px 560px at 108% -10%, rgba(179, 32, 44, .12), transparent 60%),
+        radial-gradient(820px 480px at -12% 112%, rgba(224, 122, 31, .12), transparent 58%),
+        var(--sv-bg);
 }
 
 .auth-topbar {
@@ -165,17 +368,27 @@ body {
 
 .auth-logo {
     display: block;
-    height: 60px;
+    height: 62px;
     width: auto;
     margin: 0 auto 1.25rem;
+    filter: drop-shadow(0 8px 16px rgba(36, 31, 30, .18));
 }
 
 .auth-card {
+    position: relative;
     background: #fff;
-    border-radius: .6rem;
+    border: 1px solid var(--sv-border);
+    border-radius: var(--sv-radius-lg);
     padding: 2rem 1.5rem;
-    box-shadow: 0 10px 15px -3px rgba(36, 31, 30, .1), 0 4px 6px -4px rgba(36, 31, 30, .1);
-    border-top: 4px solid var(--sv-primary);
+    box-shadow: var(--sv-shadow-lg);
+    overflow: hidden;
+}
+.auth-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--sv-primary), var(--sv-accent));
 }
 
 @media (min-width: 400px) {
@@ -183,19 +396,20 @@ body {
 }
 
 .auth-title {
-    font-weight: 700;
-    font-size: 1.35rem;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -.01em;
     color: var(--sv-dark);
     text-align: center;
     margin-bottom: .35rem;
 }
 
 .auth-subtitle {
-    color: #6b625f;
-    font-size: .9rem;
+    color: var(--sv-muted);
+    font-size: .92rem;
     text-align: center;
     margin-bottom: 1.75rem;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .auth-page hr {
@@ -209,18 +423,13 @@ body {
     color: var(--sv-dark);
 }
 
-.auth-page .form-control {
-    min-height: 46px;
-    font-size: 1rem;
-}
-
-.auth-page .form-control:focus {
-    border-color: var(--sv-primary);
-    box-shadow: 0 0 0 .2rem rgba(179, 32, 44, .15);
+.auth-page .form-control,
+.auth-page .form-select {
+    min-height: 48px;
 }
 
 .auth-page .btn-primary {
-    min-height: 46px;
+    min-height: 48px;
     font-weight: 600;
     letter-spacing: .01em;
 }
@@ -265,11 +474,616 @@ body {
     margin-top: 1rem;
 }
 
-/* --- Tabele -----------------------------------------------------------------*/
-.table thead {
-    background: #f2ece9;
+/* === Pagina de autentificare · redesign premium (scop: doar .auth-login) ====
+ * Stilurile de mai jos afectează exclusiv pagina de login (body.auth-login).
+ * Clasele generice .auth-* de mai sus rămân neatinse pentru pagina de setup.
+ */
+body.auth-login {
+    background:
+        radial-gradient(1100px 620px at 108% -8%, rgba(179, 32, 44, .12), transparent 60%),
+        radial-gradient(880px 520px at -12% 112%, rgba(224, 122, 31, .12), transparent 58%),
+        var(--sv-bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
+.auth-login .auth-main {
+    padding: clamp(1rem, .6rem + 2.4vw, 3rem);
+    padding-top: max(clamp(1rem, .6rem + 2.4vw, 3rem), env(safe-area-inset-top));
+    padding-right: max(clamp(1rem, .6rem + 2.4vw, 3rem), env(safe-area-inset-right));
+    padding-bottom: max(clamp(1rem, .6rem + 2.4vw, 3rem), env(safe-area-inset-bottom));
+    padding-left: max(clamp(1rem, .6rem + 2.4vw, 3rem), env(safe-area-inset-left));
+}
+
+.auth-login .auth-shell {
+    width: 100%;
+    max-width: 1060px;
+    display: grid;
+    grid-template-columns: 1fr;
+    background: #fff;
+    border-radius: clamp(1.1rem, .5rem + 2vw, 1.75rem);
+    overflow: hidden;
+    box-shadow:
+        0 24px 55px -26px rgba(36, 31, 30, .42),
+        0 10px 24px -18px rgba(36, 31, 30, .30);
+}
+
+@media (min-width: 900px) {
+    .auth-login .auth-shell {
+        grid-template-columns: 1.02fr .98fr;
+        min-height: min(640px, calc(100dvh - 6rem));
+    }
+}
+
+/* --- Panou de brand (stânga pe desktop, banner compact sus pe mobil) ------- */
+.auth-login .auth-brand {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(1rem, 2vw, 2rem);
+    padding: clamp(1.5rem, 1rem + 4vw, 3.5rem);
+    color: #fff;
+    background: linear-gradient(155deg, #5c0f17 0%, var(--sv-primary-dark) 44%, var(--sv-primary) 100%);
+}
+
+/* Blob-uri circulare mari (gradient + blur + transparență) */
+.auth-login .auth-brand::before,
+.auth-login .auth-brand::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    z-index: -2;
+    pointer-events: none;
+}
+.auth-login .auth-brand::before {
+    width: clamp(320px, 46vw, 560px);
+    aspect-ratio: 1;
+    top: -22%;
+    right: -20%;
+    background: radial-gradient(circle at 50% 50%, rgba(224, 122, 31, .55), rgba(224, 122, 31, 0) 68%);
+    filter: blur(2px);
+}
+.auth-login .auth-brand::after {
+    width: clamp(240px, 34vw, 440px);
+    aspect-ratio: 1;
+    bottom: -26%;
+    left: -18%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 70%);
+}
+
+/* Inele circulare decorative suprapuse */
+.auth-login .auth-brand__decor {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+.auth-login .auth-orb {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .14);
+}
+.auth-login .auth-orb--1 {
+    width: clamp(260px, 40vw, 480px);
+    aspect-ratio: 1;
+    top: -14%;
+    right: -12%;
+    background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .10), transparent 60%);
+}
+.auth-login .auth-orb--2 {
+    width: clamp(150px, 22vw, 260px);
+    aspect-ratio: 1;
+    top: 32%;
+    right: 6%;
+    border-color: rgba(255, 255, 255, .10);
+}
+.auth-login .auth-orb--3 {
+    width: clamp(180px, 26vw, 320px);
+    aspect-ratio: 1;
+    bottom: -12%;
+    left: -8%;
+    border-color: rgba(255, 255, 255, .12);
+    background: radial-gradient(circle at 50% 50%, rgba(224, 122, 31, .16), transparent 62%);
+}
+
+.auth-login .auth-eyebrow {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .8rem;
+    border-radius: 999px;
+    font-size: clamp(.64rem, .58rem + .2vw, .72rem);
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .85);
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(255, 255, 255, .18);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.auth-login .auth-brand__logo {
+    height: clamp(50px, 4vw, 66px);
+    width: auto;
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .30));
+}
+.auth-login .auth-brand__title {
+    margin: 0 0 .6rem;
+    font-weight: 800;
+    font-size: clamp(1.5rem, 1.05rem + 2vw, 2.3rem);
+    line-height: 1.12;
+    letter-spacing: -.01em;
+}
+.auth-login .auth-brand__text {
+    max-width: 42ch;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: clamp(.9rem, .85rem + .3vw, 1.02rem);
+    line-height: 1.6;
+}
+
+.auth-login .auth-brand__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: .7rem;
+}
+.auth-login .auth-brand__list li {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font-size: clamp(.85rem, .8rem + .25vw, .95rem);
+    color: rgba(255, 255, 255, .9);
+}
+.auth-login .auth-brand__list svg {
+    flex: none;
+    box-sizing: content-box;
+    width: .8rem;
+    height: .8rem;
+    padding: .3rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+/* Pe ecrane mici panoul de brand devine un banner compact, formularul primează */
+@media (max-width: 899.98px) {
+    .auth-login .auth-brand {
+        gap: .9rem;
+        padding: clamp(1.35rem, 1rem + 3.5vw, 2rem);
+    }
+    .auth-login .auth-brand__text,
+    .auth-login .auth-brand__list {
+        display: none;
+    }
+    .auth-login .auth-brand__logo {
+        margin-bottom: .75rem;
+    }
+    .auth-login .auth-brand__title {
+        font-size: clamp(1.35rem, 1.1rem + 3vw, 1.8rem);
+    }
+}
+
+/* --- Panou formular ------------------------------------------------------- */
+.auth-login .auth-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1.5rem, 1rem + 4vw, 3.25rem);
+}
+.auth-login .auth-formwrap {
+    width: 100%;
+    max-width: 400px;
+}
+.auth-login .auth-formwrap__head {
+    margin-bottom: clamp(1.25rem, 1rem + 1.5vw, 1.85rem);
+}
+.auth-login .auth-heading {
+    margin: 0 0 .4rem;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 1.2rem + 1vw, 1.7rem);
+    letter-spacing: -.01em;
+    color: var(--sv-dark);
+}
+.auth-login .auth-subheading {
+    margin: 0;
+    color: #6b625f;
+    font-size: clamp(.9rem, .87rem + .2vw, .98rem);
+    line-height: 1.5;
+}
+
+/* Alerte */
+.auth-login .alert {
+    border: 0;
+    border-radius: .8rem;
+    padding: .8rem 1rem;
+    margin-bottom: 1.1rem;
+    font-size: .9rem;
+}
+.auth-login .alert-danger {
+    background: #fdecec;
+    color: #8a1420;
+    box-shadow: inset 0 0 0 1px rgba(179, 32, 44, .18);
+}
+.auth-login .alert-success {
+    background: #e8f5ec;
+    color: #1f6b39;
+    box-shadow: inset 0 0 0 1px rgba(46, 125, 70, .18);
+}
+
+/* Câmpuri */
+.auth-login .auth-field {
+    margin-bottom: 1.15rem;
+}
+.auth-login .form-label {
+    margin-bottom: .45rem;
+    font-weight: 600;
+    font-size: .86rem;
+    color: var(--sv-dark);
+}
+.auth-login .auth-input {
+    position: relative;
+    display: block;
+}
+.auth-login .auth-input__icon {
+    position: absolute;
+    left: .95rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.15rem;
+    height: 1.15rem;
+    color: #9a8f8b;
+    pointer-events: none;
+    transition: color .15s ease;
+}
+.auth-login .auth-input .form-control {
+    min-height: 50px;
+    padding: .6rem .9rem .6rem 2.85rem;
+    font-size: 1rem;
+    color: #2b2523;
+    background-color: #fbf9f7;
+    border: 1.5px solid #e5ded9;
+    border-radius: .8rem;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.auth-login .password-field .form-control {
+    padding-right: 3rem;
+}
+.auth-login .auth-input .form-control::placeholder {
+    color: #b6aca7;
+}
+.auth-login .auth-input .form-control:hover {
+    border-color: #d6ccc6;
+}
+.auth-login .auth-input .form-control:focus {
+    background-color: #fff;
+    border-color: var(--sv-primary);
+    box-shadow: 0 0 0 4px rgba(179, 32, 44, .14);
+}
+.auth-login .auth-input:focus-within .auth-input__icon {
+    color: var(--sv-primary);
+}
+
+/* Stare de eroare (fără iconul implicit Bootstrap, care s-ar suprapune) */
+.auth-login .auth-input .form-control.is-invalid {
+    background-image: none;
+    background-color: #fff;
+    border-color: var(--sv-danger);
+}
+.auth-login .auth-input .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(179, 32, 44, .16);
+}
+.auth-login .auth-input:has(.form-control.is-invalid) .auth-input__icon {
+    color: var(--sv-danger);
+}
+.auth-login .auth-field .invalid-feedback {
+    display: block;
+    margin-top: .4rem;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--sv-danger);
+}
+
+/* Buton de afișare a parolei */
+.auth-login .password-toggle {
+    width: 3rem;
+    color: #9a8f8b;
+    border-radius: 0 .8rem .8rem 0;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+.auth-login .password-toggle:hover,
+.auth-login .password-toggle:focus-visible {
+    color: var(--sv-primary);
+}
+.auth-login .password-toggle:focus-visible {
+    outline: 2px solid rgba(179, 32, 44, .5);
+    outline-offset: -3px;
+    border-radius: .5rem;
+}
+
+/* Buton principal */
+.auth-login .btn-primary {
+    min-height: 50px;
+    margin-top: .4rem;
+    border: 0;
+    border-radius: .8rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: .01em;
+    background: linear-gradient(180deg, var(--sv-primary) 0%, var(--sv-primary-dark) 100%);
+    box-shadow: 0 12px 22px -12px rgba(179, 32, 44, .75);
+    transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+}
+.auth-login .btn-primary:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 16px 28px -12px rgba(179, 32, 44, .8);
+}
+.auth-login .btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 7px 16px -10px rgba(179, 32, 44, .7);
+}
+.auth-login .btn-primary:focus-visible {
+    outline: 3px solid rgba(179, 32, 44, .35);
+    outline-offset: 2px;
+}
+.auth-login .btn-primary:disabled,
+.auth-login .btn-primary.is-loading {
+    opacity: .85;
+    filter: none;
+    cursor: progress;
+    transform: none;
+    box-shadow: 0 6px 14px -10px rgba(179, 32, 44, .5);
+}
+
+.auth-login .auth-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.auth-login .auth-submit__spinner {
+    display: none;
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-left: .55rem;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .45);
+    border-top-color: #fff;
+    animation: auth-spin .6s linear infinite;
+}
+.auth-login .auth-submit.is-loading .auth-submit__spinner {
+    display: inline-block;
+}
+@keyframes auth-spin {
+    to { transform: rotate(360deg); }
+}
+
+.auth-login .auth-footnote {
+    margin: 1.25rem 0 0;
+    color: #857b77;
+    font-size: .82rem;
+    text-align: center;
+}
+.auth-login .auth-secure-note {
+    margin-top: .85rem;
+    color: #857b77;
+    font-size: .78rem;
+}
+.auth-login .auth-secure-note svg {
+    width: .95rem;
+    height: .95rem;
+    color: var(--sv-success);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-login .btn-primary,
+    .auth-login .form-control,
+    .auth-login .auth-input__icon,
+    .auth-login .password-toggle {
+        transition: none;
+    }
+    .auth-login .auth-submit__spinner {
+        animation-duration: 1.4s;
+    }
+}
+
+/* --- Tabele -----------------------------------------------------------------*/
+.table {
+    --bs-table-hover-bg: rgba(179, 32, 44, .05);
+    margin-bottom: 0;
+    color: #2b2523;
+}
+.table thead th {
+    background: #f5efec;
+    color: var(--sv-muted);
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom: 1px solid var(--sv-border);
+    padding: .75rem .9rem;
+    white-space: nowrap;
+}
+.table tbody td {
+    padding: .75rem .9rem;
+    vertical-align: middle;
+    border-bottom-color: #f1eae6;
+}
+.table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Tabele care se transformă în carduri pe ecrane înguste (fără scroll orizontal) */
+@media (max-width: 768px) {
+    .table-stack thead {
+        display: none;
+    }
+    .table-stack,
+    .table-stack tbody,
+    .table-stack tr,
+    .table-stack td {
+        display: block;
+        width: 100%;
+    }
+    .table-stack tr {
+        border: 1px solid var(--sv-border);
+        border-radius: var(--sv-radius);
+        padding: .35rem .85rem;
+        margin: .6rem .75rem;
+        background: #fff;
+        box-shadow: var(--sv-shadow-sm);
+    }
+    .table-stack tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        text-align: right;
+        padding: .5rem 0;
+        border-bottom: 1px solid #f1eae6;
+    }
+    .table-stack tbody td:last-child {
+        border-bottom: 0;
+    }
+    .table-stack tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--sv-muted);
+        text-align: left;
+        flex: 0 0 auto;
+    }
+    /* Celula de acțiuni: butoanele ocupă toată lățimea, ușor de apăsat */
+    .table-stack tbody td.cell-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    .table-stack tbody td.cell-actions::before {
+        flex-basis: 100%;
+        margin-bottom: .25rem;
+    }
+    .table-stack tbody td.cell-actions .btn {
+        flex: 1 1 auto;
+    }
+    /* Rândul gol „Nicio activitate” rămâne centrat, fără etichetă */
+    .table-stack tbody td.cell-empty {
+        justify-content: center;
+        text-align: center;
+    }
+    .table-stack tbody td.cell-empty::before {
+        content: none;
+    }
+}
+
+/* --- Formulare (global) --------------------------------------------------- */
+.form-label {
+    font-weight: 600;
+    font-size: .86rem;
+    color: var(--sv-dark);
+    margin-bottom: .4rem;
+}
+.form-control,
+.form-select {
+    border-radius: var(--sv-radius);
+    border: 1.5px solid var(--sv-border);
+    background-color: var(--sv-field-bg);
+    color: #2b2523;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.form-control:hover:not(:disabled):not([readonly]),
+.form-select:hover:not(:disabled) {
+    border-color: #d6ccc6;
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: #fff;
+    border-color: var(--sv-primary);
+    box-shadow: 0 0 0 4px rgba(179, 32, 44, .13);
+}
+.form-control::placeholder {
+    color: #b6aca7;
+}
+.form-control:disabled,
+.form-select:disabled {
+    background-color: #f3eeeb;
+    color: #8c827d;
+}
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: var(--sv-danger);
+}
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(179, 32, 44, .15);
+}
+.invalid-feedback {
+    font-weight: 500;
+}
+.form-text {
+    color: var(--sv-muted);
+}
+
+/* --- Alerte (global) ------------------------------------------------------ */
+.alert {
+    border: 0;
+    border-radius: var(--sv-radius);
+    box-shadow: var(--sv-shadow-sm);
+}
+.alert-success { background: #e8f5ec; color: #1f6b39; }
+.alert-danger  { background: #fdecec; color: #8a1420; }
+.alert-warning { background: #fdf3e0; color: #8a5a08; }
+.alert-info    { background: #eef2f4; color: #3a4a52; }
+
+/* --- Ferestre modale ------------------------------------------------------ */
+.modal-content {
+    border: 0;
+    border-radius: var(--sv-radius-lg);
+    box-shadow: var(--sv-shadow-lg);
+    overflow: hidden;
+}
+.modal-header {
+    background: #fff;
+    border-bottom: 1px solid var(--sv-border);
+}
+.modal-header .modal-title {
+    font-weight: 700;
+    color: var(--sv-dark);
+}
+.modal-footer {
+    border-top: 1px solid var(--sv-border);
+}
+
+/* --- Titluri de pagină / pagina 404 --------------------------------------- */
+main.container > h1,
+main.container .h3 {
+    color: var(--sv-dark);
+    letter-spacing: -.02em;
+}
+.error-code {
+    font-size: clamp(3.5rem, 3rem + 6vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.03em;
+    background: linear-gradient(135deg, var(--sv-primary), var(--sv-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: .25rem;
+}
+
+/* --- Responsive ----------------------------------------------------------- */
 @media (max-width: 767.98px) {
     .app-header .brand-text { display: none; }
+    .app-header .navbar-nav { gap: .15rem !important; }
+    main.container { padding-top: 1.25rem; }
 }

@@ -51,9 +51,17 @@ final class User
     public static function countActiveVolunteers(): int
     {
         $stmt = Database::connection()->query(
-            "SELECT COUNT(*) FROM users WHERE role = 'applicant' AND is_active = 1"
+            "SELECT COUNT(*) FROM users WHERE role <> 'admin' AND is_active = 1"
         );
         return (int) $stmt->fetchColumn();
+    }
+
+    public static function activeAdmins(): array
+    {
+        $stmt = Database::connection()->query(
+            "SELECT * FROM users WHERE role = 'admin' AND is_active = 1"
+        );
+        return $stmt->fetchAll();
     }
 
     public static function all(): array

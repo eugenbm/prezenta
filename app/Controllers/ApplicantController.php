@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Mailer;
 use App\Models\Activity;
 use App\Models\ActivityType;
 use App\Models\User;
@@ -15,10 +16,12 @@ final class ApplicantController extends Controller
     {
         $user = current_user();
         $counts = Activity::countsForUser((int) $user['id']);
-        $approvedHours = Activity::sumApprovedHoursForUser((int) $user['id']);
         $recent = Activity::recentForUser((int) $user['id'], 5);
+        $year = (int) date('Y');
+        $annualDays = Activity::approvedDaysInYear((int) $user['id'], $year);
+        $annualGoal = annual_days_goal();
 
-        $this->render('applicant/dashboard', compact('counts', 'approvedHours', 'recent'));
+        $this->render('applicant/dashboard', compact('counts', 'recent', 'year', 'annualDays', 'annualGoal'));
     }
 
     public function activities(): void
@@ -61,9 +64,79 @@ final class ApplicantController extends Controller
 
         $data['user_id'] = (int) $user['id'];
         Activity::create($data);
+        $notified = $this->notifyAdminsNewActivity($user, $data);
 
-        flash_set('success', 'Activitatea a fost înregistrată și așteaptă aprobarea unui administrator.');
+        $message = 'Activitatea a fost înregistrată și așteaptă aprobarea unui administrator.';
+        if ($notified > 0) {
+            $message .= ' Administratorii au fost notificați pe email.';
+        }
+        flash_set('success', $message);
         $this->redirect(route_url('?route=applicant/activities'));
+    }
+
+    /**
+     * Anunță pe email administratorii activi despre o activitate nouă de aprobat.
+     * Returnează numărul de emailuri trimise cu succes.
+     */
+    private function notifyAdminsNewActivity(array $aspirant, array $data): int
+    {
+        $admins = User::activeAdmins();
+        if (!$admins) {
+            return 0;
+        }
+
+        $type = ActivityType::find((int) $data['activity_type_id']);
+        $typeName = $type['name'] ?? 'Activitate';
+        $aspirantName = $aspirant['first_name'] . ' ' . $aspirant['last_name'];
+        $dateRo = format_date_ro($data['activity_date']);
+        $link = absolute_url('?route=admin/activities&status=pending');
+        $subject = 'Activitate nouă de aprobat — ' . app_name();
+        $html = $this->newActivityEmail($aspirantName, $typeName, $dateRo, $link);
+
+        $sent = 0;
+        foreach ($admins as $admin) {
+            try {
+                Mailer::send($admin['email'], $admin['first_name'] . ' ' . $admin['last_name'], $subject, $html);
+                $sent++;
+                $this->logMail('admin-notify OK -> ' . $admin['email']);
+            } catch (\Throwable $e) {
+                error_log('Notificare admin activitate nouă eșuată: ' . $e->getMessage());
+                $this->logMail('admin-notify EȘEC -> ' . $admin['email'] . ' : ' . $e->getMessage());
+            }
+        }
+
+        return $sent;
+    }
+
+    private function logMail(string $line): void
+    {
+        @file_put_contents(
+            dirname(__DIR__, 2) . '/storage/logs/mail.log',
+            '[' . date('Y-m-d H:i:s') . '] ' . $line . "\n",
+            FILE_APPEND
+        );
+    }
+
+    private function newActivityEmail(string $aspirantName, string $typeName, string $dateRo, string $link): string
+    {
+        $appName = e(app_name());
+        $aspirantName = e($aspirantName);
+        $typeName = e($typeName);
+        $dateRo = e($dateRo);
+        $linkSafe = e($link);
+
+        return <<<HTML
+            <div style="font-family:Arial,Helvetica,sans-serif;color:#2b2523;line-height:1.6;">
+                <p>O activitate nouă așteaptă aprobarea în <strong>{$appName}</strong>.</p>
+                <ul>
+                    <li><strong>Aspirant:</strong> {$aspirantName}</li>
+                    <li><strong>Tip activitate:</strong> {$typeName}</li>
+                    <li><strong>Data:</strong> {$dateRo}</li>
+                </ul>
+                <p><a href="{$linkSafe}" style="display:inline-block;background:#841821;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">Vezi activitățile în așteptare</a></p>
+                <p style="font-size:13px;color:#777;">Dacă butonul nu funcționează, copiază acest link în browser:<br>{$linkSafe}</p>
+            </div>
+            HTML;
     }
 
     public function editActivity(): void
@@ -109,9 +182,11 @@ final class ApplicantController extends Controller
     {
         $user = current_user();
         $counts = Activity::countsForUser((int) $user['id']);
-        $approvedHours = Activity::sumApprovedHoursForUser((int) $user['id']);
+        $year = (int) date('Y');
+        $annualDays = Activity::approvedDaysInYear((int) $user['id'], $year);
+        $annualGoal = annual_days_goal();
 
-        $this->render('applicant/profile', compact('user', 'counts', 'approvedHours'));
+        $this->render('applicant/profile', compact('user', 'counts', 'year', 'annualDays', 'annualGoal'));
     }
 
     /** @return array{0: array, 1: array} [date, errors] */
@@ -119,12 +194,9 @@ final class ApplicantController extends Controller
     {
         $activityTypeId = (int) ($_POST['activity_type_id'] ?? 0);
         $activityDate = $this->input('activity_date');
-        $startTime = $this->input('start_time');
-        $endTime = $this->input('end_time');
         $location = $this->input('location');
         $description = $this->input('description');
         $notes = $this->input('notes');
-        $durationRaw = $this->input('duration_hours');
 
         $errors = [];
 
@@ -139,31 +211,9 @@ final class ApplicantController extends Controller
             $errors['activity_date'] = 'Data activității nu poate fi în viitor.';
         }
 
-        if ($description === '' || mb_strlen($description) < 5) {
-            $errors['description'] = 'Descrierea trebuie să aibă cel puțin 5 caractere.';
-        }
-
-        if ($startTime !== '' && $endTime !== '' && $startTime >= $endTime) {
-            $errors['end_time'] = 'Ora de final trebuie să fie după ora de început.';
-        }
-
-        $duration = null;
-        if ($startTime !== '' && $endTime !== '' && $startTime < $endTime) {
-            $duration = round((strtotime($endTime) - strtotime($startTime)) / 3600, 2);
-        } elseif ($durationRaw !== '') {
-            if (!is_numeric($durationRaw) || (float) $durationRaw < 0 || (float) $durationRaw > 24) {
-                $errors['duration_hours'] = 'Numărul de ore trebuie să fie între 0 și 24.';
-            } else {
-                $duration = (float) $durationRaw;
-            }
-        }
-
         $data = [
             'activity_type_id' => $activityTypeId,
             'activity_date' => $activityDate,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration_hours' => $duration,
             'location' => $location,
             'description' => $description,
             'notes' => $notes,

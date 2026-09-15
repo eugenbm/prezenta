@@ -1,4 +1,7 @@
-<h1 class="h3 mb-4">Toate activitățile</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Toate activitățile</h1>
+    <a href="<?= route_url('?route=admin/activity/create') ?>" class="btn btn-primary">Adaugă activitate</a>
+</div>
 
 <form method="get" action="<?= route_url() ?>" class="filter-bar card card-body mb-4">
     <input type="hidden" name="route" value="admin/activities">
@@ -47,23 +50,22 @@
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-stack mb-0">
             <thead>
-                <tr><th>Voluntar</th><th>Data</th><th>Tip</th><th>Descriere</th><th>Ore</th><th>Status</th><th></th></tr>
+                <tr><th>Voluntar</th><th>Data</th><th>Tip</th><th>Descriere</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
             <?php if (!$activities): ?>
-                <tr><td colspan="7" class="text-center text-muted py-4">Nicio activitate găsită.</td></tr>
+                <tr><td colspan="6" class="cell-empty text-center text-muted py-4">Nicio activitate găsită.</td></tr>
             <?php endif; ?>
             <?php foreach ($activities as $activity): ?>
                 <tr>
-                    <td><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
-                    <td><?= format_date_ro($activity['activity_date']) ?></td>
-                    <td><?= e($activity['type_name']) ?></td>
-                    <td><?= e(mb_strimwidth($activity['description'], 0, 50, '…')) ?></td>
-                    <td><?= $activity['duration_hours'] !== null ? number_format((float) $activity['duration_hours'], 1) : '—' ?></td>
-                    <td><?= status_badge($activity['status']) ?></td>
-                    <td class="d-flex gap-1 flex-wrap">
+                    <td data-label="Voluntar"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
+                    <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
+                    <td data-label="Tip"><?= e($activity['type_name']) ?></td>
+                    <td data-label="Descriere"><?= e(mb_strimwidth($activity['description'], 0, 50, '…')) ?></td>
+                    <td data-label="Status"><?= status_badge($activity['status']) ?></td>
+                    <td data-label="Acțiuni" class="cell-actions d-flex gap-1 flex-wrap">
                         <a href="<?= route_url('?route=admin/activity/edit&id=' . $activity['id']) ?>" class="btn btn-sm btn-outline-secondary">Editează</a>
                         <?php if ($activity['status'] === 'pending'): ?>
                             <form method="post" action="<?= route_url('?route=admin/activity/approve') ?>" class="d-inline">

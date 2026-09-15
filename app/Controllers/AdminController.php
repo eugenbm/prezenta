@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Mailer;
+use App\Core\Pdf;
 use App\Models\Activity;
 use App\Models\ActivityType;
 use App\Models\AuditLog;
+use App\Models\CaseSheet;
+use App\Models\PasswordReset;
 use App\Models\User;
 
 final class AdminController extends Controller
@@ -16,11 +20,10 @@ final class AdminController extends Controller
     {
         $activeVolunteers = User::countActiveVolunteers();
         $counts = Activity::countsGlobal();
-        $approvedHours = Activity::sumApprovedHoursGlobal();
-        $pending = Activity::pendingForAdmin(10);
+        $pending = Activity::pendingForAdmin(5);
         $byType = Activity::reportByType();
 
-        $this->render('admin/dashboard', compact('activeVolunteers', 'counts', 'approvedHours', 'pending', 'byType'));
+        $this->render('admin/dashboard', compact('activeVolunteers', 'counts', 'pending', 'byType'));
     }
 
     // --- Voluntari -----------------------------------------------------
@@ -47,13 +50,9 @@ final class AdminController extends Controller
         $lastName = $this->input('last_name');
         $email = $this->input('email');
         $username = $this->input('username');
-        $password = (string) ($_POST['password'] ?? '');
         $role = $this->input('role', 'applicant');
 
         $errors = $this->validateUser($firstName, $lastName, $email, $username, $role);
-        if (strlen($password) < 10) {
-            $errors['password'] = 'Parola trebuie să aibă cel puțin 10 caractere.';
-        }
 
         if ($errors) {
             set_old_and_errors([
@@ -63,20 +62,57 @@ final class AdminController extends Controller
             return;
         }
 
+        // Parolă aleatorie temporară — utilizatorul își setează propria parolă prin linkul din email.
         $id = User::create([
             'first_name' => $firstName,
             'last_name' => $lastName,
             'email' => $email,
             'username' => $username,
-            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'password_hash' => password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
             'role' => $role,
             'is_active' => 1,
         ]);
 
         AuditLog::record((int) current_user()['id'], 'user_created', 'user', $id);
 
-        flash_set('success', 'Contul a fost creat cu succes.');
+        $token = PasswordReset::create($id);
+        $link = absolute_url('?route=set-password&token=' . urlencode($token));
+
+        try {
+            Mailer::send($email, $firstName . ' ' . $lastName, 'Setați-vă parola — ' . app_name(), $this->passwordSetupEmail($firstName, $username, $link));
+            flash_set('success', 'Contul a fost creat. Un email cu linkul de setare a parolei a fost trimis la ' . $email . '.');
+        } catch (\Throwable $e) {
+            error_log('Trimitere email setare parolă eșuată: ' . $e->getMessage());
+            @file_put_contents(
+                dirname(__DIR__, 2) . '/storage/logs/mail.log',
+                '[' . date('Y-m-d H:i:s') . '] ' . $e->getMessage() . "\n",
+                FILE_APPEND
+            );
+            $reason = config('app.debug') ? ' (motiv: ' . $e->getMessage() . ')' : '';
+            flash_set('error', 'Contul a fost creat, dar emailul nu a putut fi trimis' . $reason . '. Trimiteți manual acest link utilizatorului: ' . $link);
+        }
+
         $this->redirect(route_url('?route=admin/users'));
+    }
+
+    private function passwordSetupEmail(string $firstName, string $username, string $link): string
+    {
+        $appName = e(app_name());
+        $firstName = e($firstName);
+        $username = e($username);
+        $linkSafe = e($link);
+
+        return <<<HTML
+            <div style="font-family:Arial,Helvetica,sans-serif;color:#2b2523;line-height:1.6;">
+                <p>Bună, {$firstName},</p>
+                <p>A fost creat un cont pentru tine în aplicația <strong>{$appName}</strong>.</p>
+                <p>Numele tău de utilizator este: <strong>{$username}</strong></p>
+                <p>Pentru a-ți seta parola, accesează linkul de mai jos (valabil 48 de ore):</p>
+                <p><a href="{$linkSafe}" style="display:inline-block;background:#841821;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">Setează-ți parola</a></p>
+                <p style="font-size:13px;color:#777;">Dacă butonul nu funcționează, copiază acest link în browser:<br>{$linkSafe}</p>
+                <p style="font-size:13px;color:#777;">Dacă nu te așteptai la acest email, ignoră-l.</p>
+            </div>
+            HTML;
     }
 
     public function editUser(): void
@@ -175,7 +211,7 @@ final class AdminController extends Controller
         if ($username === '' || !preg_match('/^[a-zA-Z0-9._-]{3,60}$/', $username)) {
             $errors['username'] = 'Numele de utilizator trebuie să aibă 3-60 caractere (litere, cifre, . _ -).';
         }
-        if (!in_array($role, config('roles', ['admin', 'applicant']), true)) {
+        if (!in_array($role, assignable_roles(), true)) {
             $errors['role'] = 'Rol invalid.';
         }
         if (!$errors && User::existsByUsernameOrEmail($username, $email, $excludeId)) {
@@ -199,9 +235,71 @@ final class AdminController extends Controller
 
         $activities = Activity::listForAdmin(array_filter($filters));
         $types = ActivityType::allActive();
-        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'applicant');
+        $volunteers = array_filter(User::all(), fn ($u) => in_array($u['role'], volunteer_roles(), true));
 
         $this->render('admin/activities', compact('activities', 'types', 'volunteers', 'filters'));
+    }
+
+    public function createActivity(): void
+    {
+        if ($this->isPost()) {
+            $this->storeActivity();
+            return;
+        }
+
+        $types = ActivityType::allActive();
+        $volunteers = array_filter(User::all(), fn ($u) => in_array($u['role'], volunteer_roles(), true));
+        $this->render('admin/activity_create', compact('types', 'volunteers'));
+    }
+
+    private function storeActivity(): void
+    {
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $status = $this->input('status', 'pending');
+        $data = $this->collectActivityInput();
+
+        $errors = [];
+        $volunteer = User::find($userId);
+        if (!$volunteer || !in_array($volunteer['role'], volunteer_roles(), true)) {
+            $errors['user_id'] = 'Selectați un aspirant valid.';
+        }
+        $type = ActivityType::find($data['activity_type_id']);
+        if (!$type || (int) $type['is_active'] !== 1) {
+            $errors['activity_type_id'] = 'Selectați un tip de activitate valid.';
+        }
+        if ($data['activity_date'] === '' || !$this->isValidDate($data['activity_date'])) {
+            $errors['activity_date'] = 'Introduceți o dată validă.';
+        } elseif ($data['activity_date'] > date('Y-m-d')) {
+            $errors['activity_date'] = 'Data activității nu poate fi în viitor.';
+        }
+        if (!in_array($status, ['pending', 'approved'], true)) {
+            $errors['status'] = 'Status invalid.';
+        }
+
+        if ($errors) {
+            set_old_and_errors(array_merge($_POST, ['user_id' => $userId, 'status' => $status]), $errors);
+            $this->redirect(route_url('?route=admin/activity/create'));
+            return;
+        }
+
+        $data['user_id'] = $userId;
+        $data['status'] = $status;
+        $id = Activity::create($data);
+
+        if ($status === 'approved') {
+            Activity::approve($id, (int) current_user()['id']);
+        }
+
+        AuditLog::record((int) current_user()['id'], 'activity_created_by_admin', 'activity', $id);
+
+        flash_set('success', 'Activitatea a fost adăugată pentru aspirant.');
+        $this->redirect(route_url('?route=admin/activities'));
+    }
+
+    private function isValidDate(string $date): bool
+    {
+        $d = \DateTime::createFromFormat('Y-m-d', $date);
+        return $d && $d->format('Y-m-d') === $date;
     }
 
     public function editActivity(): void
@@ -229,23 +327,9 @@ final class AdminController extends Controller
 
     private function collectActivityInput(): array
     {
-        $startTime = $this->input('start_time');
-        $endTime = $this->input('end_time');
-        $durationRaw = $this->input('duration_hours');
-
-        $duration = null;
-        if ($startTime !== '' && $endTime !== '' && $startTime < $endTime) {
-            $duration = round((strtotime($endTime) - strtotime($startTime)) / 3600, 2);
-        } elseif ($durationRaw !== '' && is_numeric($durationRaw)) {
-            $duration = (float) $durationRaw;
-        }
-
         return [
             'activity_type_id' => (int) ($_POST['activity_type_id'] ?? 0),
             'activity_date' => $this->input('activity_date'),
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'duration_hours' => $duration,
             'location' => $this->input('location'),
             'description' => $this->input('description'),
             'notes' => $this->input('notes'),
@@ -316,9 +400,13 @@ final class AdminController extends Controller
         $byType = Activity::reportByType(array_filter($filters));
         $byVolunteer = Activity::reportByVolunteer(array_filter($filters));
         $types = ActivityType::allActive();
-        $volunteers = array_filter(User::all(), fn ($u) => $u['role'] === 'applicant');
+        $volunteers = array_filter(User::all(), fn ($u) => in_array($u['role'], volunteer_roles(), true));
 
-        $this->render('admin/reports', compact('activities', 'byType', 'byVolunteer', 'types', 'volunteers', 'filters'));
+        $year = (int) date('Y');
+        $annualDays = Activity::approvedDaysInYearForApplicants($year);
+        $annualGoal = annual_days_goal();
+
+        $this->render('admin/reports', compact('activities', 'byType', 'byVolunteer', 'types', 'volunteers', 'filters', 'year', 'annualDays', 'annualGoal'));
     }
 
     public function exportCsv(): void
@@ -339,16 +427,13 @@ final class AdminController extends Controller
         $out = fopen('php://output', 'w');
         // BOM UTF-8 pentru compatibilitate cu Excel.
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Voluntar', 'Tip activitate', 'Data', 'Ora start', 'Ora final', 'Ore', 'Locație', 'Descriere', 'Status', 'Motiv respingere']);
+        fputcsv($out, ['Voluntar', 'Tip activitate', 'Data', 'Locație', 'Descriere', 'Status', 'Motiv respingere']);
 
         foreach ($activities as $activity) {
             fputcsv($out, [
                 $activity['volunteer_last_name'] . ' ' . $activity['volunteer_first_name'],
                 $activity['type_name'],
                 $activity['activity_date'],
-                $activity['start_time'],
-                $activity['end_time'],
-                $activity['duration_hours'],
                 $activity['location'],
                 $activity['description'],
                 status_label($activity['status']),
@@ -376,15 +461,275 @@ final class AdminController extends Controller
         ];
 
         $activities = Activity::listForAdmin(array_filter($filters));
-        $totalHours = 0.0;
         $totalApproved = 0;
+        $approvedDays = [];
         foreach ($activities as $activity) {
             if ($activity['status'] === 'approved') {
                 $totalApproved++;
-                $totalHours += (float) ($activity['duration_hours'] ?? 0);
+                $approvedDays[$activity['activity_date']] = true;
+            }
+        }
+        $totalDays = count($approvedDays);
+
+        $this->renderPartialView('admin/report_print', compact('activities', 'filters', 'totalApproved', 'totalDays'));
+    }
+
+    // --- Fișă de caz -------------------------------------------------------
+
+    public function caseSheets(): void
+    {
+        $sheets = CaseSheet::all();
+        $this->render('admin/case_sheets', compact('sheets'));
+    }
+
+    /**
+     * Fișa de caz (intervenție Salvamont). GET afișează formularul, POST
+     * salvează fișa în baza de date și redirecționează către versiunea
+     * printabilă (export PDF prin funcția „Print” a browserului).
+     */
+    public function caseSheet(): void
+    {
+        // Membri disponibili pentru selecția salvatorilor.
+        $members = array_values(array_filter(User::all(), fn ($u) => (int) $u['is_active'] === 1));
+
+        if ($this->isPost()) {
+            $data = $this->collectCaseSheetInput($members);
+            $data['created_by'] = (int) current_user()['id'];
+            $id = CaseSheet::create($data);
+            AuditLog::record((int) current_user()['id'], 'case_sheet_created', 'case_sheet', $id);
+
+            flash_set('success', 'Fișa de caz a fost salvată.');
+            $this->redirect(route_url('?route=admin/case-sheets&download=' . $id));
+            return;
+        }
+
+        $current = current_user();
+        $intocmitDefault = $current ? trim($current['first_name'] . ' ' . $current['last_name']) : '';
+        $nextNumber = CaseSheet::nextNumber();
+
+        $this->render('admin/case_sheet', compact('members', 'intocmitDefault', 'nextNumber'));
+    }
+
+    /** Versiune printabilă (export PDF) a unei fișe de caz salvate. */
+    public function printCaseSheet(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $row = CaseSheet::find($id);
+        if (!$row) {
+            http_response_code(404);
+            die('Fișa de caz nu a fost găsită.');
+        }
+
+        $sheet = $this->caseSheetForDisplay($row);
+        $autoprint = isset($_GET['autoprint']);
+        $this->renderPartialView('admin/case_sheet_print', compact('sheet', 'autoprint'));
+    }
+
+    /** Descarcă fișa de caz ca fișier PDF generat pe server (fără print din browser). */
+    public function downloadCaseSheet(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $row = CaseSheet::find($id);
+        if (!$row) {
+            http_response_code(404);
+            die('Fișa de caz nu a fost găsită.');
+        }
+
+        $s = $this->caseSheetForDisplay($row);
+        $pdf = new Pdf();
+        $pdf->title('Fișă de caz', $s['serviciu'] ?: 'Salvamont Zărnești', [
+            'Generat la: ' . date('d.m.Y H:i'),
+        ]);
+
+        $pdf->line([['Nr. fișă', $s['nr_fisa']], ['Data', $s['data_fisa']]]);
+        $pdf->line([['Județ', $s['judet']], ['Serviciu', $s['serviciu']]]);
+        $pdf->row('Formație', $s['formatie']);
+        $pdf->group('Date despre alarmarea inițială', [
+            [['Alarmare prin', $s['alarmare_prin']]],
+            [['Data / Ora', $s['alarmare_datetime']], ['Tip eveniment', $s['tip_eveniment']]],
+        ]);
+        $pdf->line([['Responsabilitate', $s['responsabilitate']], ['Intervenție', $s['interventie']]]);
+        $pdf->row('Coordonator intervenție', $s['coordonator']);
+        $pdf->row('Salvatori', $s['salvatori']);
+        $pdf->group('Locație', [
+            [['Județ', $s['locatie_judet']], ['Masiv montan', $s['masiv_montan']]],
+            [['Sezon', $s['sezon']], ['Loc producere', $s['loc_producere']]],
+        ]);
+        $pdf->line([['Tip de activitate generatoare', $s['tip_activitate']], ['Nr. persoane implicate', $s['numar_persoane']]]);
+        $pdf->group('Date de identificare victimă', [
+            [['Nume și prenume', $s['victima_nume']], ['Vârstă', $s['victima_varsta']]],
+            [['Sex', $s['victima_sex']], ['Județ', $s['victima_judet']], ['Țară', $s['victima_tara']]],
+            [['Stare pacient', $s['victima_stare']], ['Contact victimă', $s['victima_contact']]],
+            [['Localizare afecțiune', $s['localizare_afectiune']]],
+        ]);
+        $pdf->row('Finalitate caz', $s['finalitate_caz']);
+        $pdf->group('Transport și finalizare', [
+            [['Predare victimă', $s['predare_datetime']], ['Transport accidentat', $s['transport']]],
+            [['Mod evacuare', $s['mod_evacuare']], ['Predată către', $s['predata_catre']]],
+            [['Victime multiple', $s['victime_multiple']], ['Revenire bază', $s['revenire_datetime']]],
+        ]);
+        $pdf->row('Întocmit', $s['intocmit']);
+
+        $content = $pdf->output();
+        $slug = $s['nr_fisa'] !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $s['nr_fisa']) : (string) $id;
+        $filename = 'fisa-caz-' . ($slug !== '' ? $slug : (string) $id) . '.pdf';
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($content));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+        echo $content;
+        exit;
+    }
+
+    public function deleteCaseSheet(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $row = CaseSheet::find($id);
+        if (!$row) {
+            http_response_code(404);
+            die('Fișa de caz nu a fost găsită.');
+        }
+
+        CaseSheet::delete($id);
+        AuditLog::record((int) current_user()['id'], 'case_sheet_deleted', 'case_sheet', $id);
+
+        flash_set('success', 'Fișa de caz a fost ștearsă.');
+        $this->redirect(route_url('?route=admin/case-sheets'));
+    }
+
+    /**
+     * Adună și normalizează datele fișei de caz din formular pentru salvare.
+     * Rezolvă ID-urile salvatorilor selectați în nume complete (text) și
+     * păstrează datele/orele brute (ora fiind opțională).
+     */
+    private function collectCaseSheetInput(array $members): array
+    {
+        $names = [];
+        foreach ($members as $m) {
+            $names[(int) $m['id']] = trim($m['first_name'] . ' ' . $m['last_name']);
+        }
+
+        $selectedIds = array_map('intval', (array) ($_POST['salvatori'] ?? []));
+        $salvatori = [];
+        foreach ($selectedIds as $id) {
+            if (isset($names[$id])) {
+                $salvatori[] = $names[$id];
             }
         }
 
-        $this->renderPartialView('admin/report_print', compact('activities', 'filters', 'totalHours', 'totalApproved'));
+        $sezon = $this->input('sezon');
+        $victimeMultiple = $this->input('victime_multiple');
+
+        return [
+            'nr_fisa' => $this->input('nr_fisa'),
+            'data_fisa' => $this->normalizeDate($this->input('data_fisa')),
+            'judet' => $this->input('judet', 'Brașov'),
+            'serviciu' => $this->input('serviciu', 'Salvamont Zărnești'),
+            'formatie' => $this->input('formatie'),
+            'alarmare_prin' => $this->input('alarmare_prin'),
+            'alarmare_data' => $this->normalizeDate($this->input('alarmare_data')),
+            'alarmare_ora' => $this->normalizeTime($this->input('alarmare_ora')),
+            'tip_eveniment' => $this->input('tip_eveniment'),
+            'responsabilitate' => $this->input('responsabilitate'),
+            'interventie' => $this->input('interventie'),
+            'coordonator' => $this->input('coordonator'),
+            'salvatori' => implode(', ', $salvatori),
+            'locatie_judet' => $this->input('locatie_judet', 'Brașov'),
+            'masiv_montan' => $this->input('masiv_montan'),
+            'sezon' => in_array($sezon, ['Vara', 'Iarna'], true) ? $sezon : '',
+            'loc_producere' => $this->input('loc_producere'),
+            'tip_activitate' => $this->input('tip_activitate'),
+            'numar_persoane' => $this->input('numar_persoane'),
+            'victima_nume' => $this->input('victima_nume'),
+            'victima_varsta' => $this->input('victima_varsta'),
+            'victima_sex' => $this->input('victima_sex'),
+            'victima_judet' => $this->input('victima_judet'),
+            'victima_tara' => $this->input('victima_tara', 'România'),
+            'victima_stare' => $this->input('victima_stare'),
+            'victima_contact' => $this->input('victima_contact'),
+            'localizare_afectiune' => $this->input('localizare_afectiune'),
+            'finalitate_caz' => $this->input('finalitate_caz'),
+            'predare_data' => $this->normalizeDate($this->input('predare_data')),
+            'predare_ora' => $this->normalizeTime($this->input('predare_ora')),
+            'transport' => $this->input('transport'),
+            'mod_evacuare' => in_array($this->input('mod_evacuare'), ['Aero', 'Terestru'], true) ? $this->input('mod_evacuare') : '',
+            'predata_catre' => $this->input('predata_catre'),
+            'victime_multiple' => in_array($victimeMultiple, ['Da', 'Nu'], true) ? $victimeMultiple : '',
+            'revenire_data' => $this->normalizeDate($this->input('revenire_data')),
+            'revenire_ora' => $this->normalizeTime($this->input('revenire_ora')),
+            'intocmit' => $this->input('intocmit'),
+        ];
+    }
+
+    private function normalizeDate(string $date): ?string
+    {
+        return ($date !== '' && $this->isValidDate($date)) ? $date : null;
+    }
+
+    private function normalizeTime(string $time): ?string
+    {
+        return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time) ? $time : null;
+    }
+
+    /** Transformă un rând din baza de date în structura afișată de view-ul printabil. */
+    private function caseSheetForDisplay(array $r): array
+    {
+        return [
+            'nr_fisa' => (string) $r['nr_fisa'],
+            'data_fisa' => $this->combineDateTime((string) $r['data_fisa'], ''),
+            'judet' => (string) $r['judet'],
+            'serviciu' => (string) $r['serviciu'],
+            'formatie' => (string) $r['formatie'],
+            'alarmare_prin' => (string) $r['alarmare_prin'],
+            'alarmare_datetime' => $this->combineDateTime((string) $r['alarmare_data'], (string) $r['alarmare_ora']),
+            'tip_eveniment' => (string) $r['tip_eveniment'],
+            'responsabilitate' => (string) $r['responsabilitate'],
+            'interventie' => (string) $r['interventie'],
+            'coordonator' => (string) $r['coordonator'],
+            'salvatori' => (string) $r['salvatori'],
+            'locatie_judet' => (string) $r['locatie_judet'],
+            'masiv_montan' => (string) $r['masiv_montan'],
+            'sezon' => (string) $r['sezon'],
+            'loc_producere' => (string) $r['loc_producere'],
+            'tip_activitate' => (string) $r['tip_activitate'],
+            'numar_persoane' => (string) $r['numar_persoane'],
+            'victima_nume' => (string) $r['victima_nume'],
+            'victima_varsta' => (string) $r['victima_varsta'],
+            'victima_sex' => (string) $r['victima_sex'],
+            'victima_judet' => (string) $r['victima_judet'],
+            'victima_tara' => (string) $r['victima_tara'],
+            'victima_stare' => (string) $r['victima_stare'],
+            'victima_contact' => (string) ($r['victima_contact'] ?? ''),
+            'localizare_afectiune' => (string) $r['localizare_afectiune'],
+            'finalitate_caz' => (string) $r['finalitate_caz'],
+            'predare_datetime' => $this->combineDateTime((string) $r['predare_data'], (string) $r['predare_ora']),
+            'transport' => (string) $r['transport'],
+            'mod_evacuare' => (string) ($r['mod_evacuare'] ?? ''),
+            'predata_catre' => (string) ($r['predata_catre'] ?? ''),
+            'victime_multiple' => (string) $r['victime_multiple'],
+            'revenire_datetime' => $this->combineDateTime((string) $r['revenire_data'], (string) $r['revenire_ora']),
+            'intocmit' => (string) $r['intocmit'],
+        ];
+    }
+
+    /**
+     * Combină o dată (Y-m-d) cu o oră opțională (H:i[:s]) într-un text lizibil
+     * în limba română. Dacă ora lipsește, se afișează doar data.
+     */
+    private function combineDateTime(string $date, string $time): string
+    {
+        if ($date === '') {
+            return '';
+        }
+        $formatted = format_date_ro($date);
+        if ($formatted === '') {
+            return '';
+        }
+        if ($time !== '' && preg_match('/^(\d{1,2}:\d{2})/', $time, $m)) {
+            return $formatted . ', ' . $m[1];
+        }
+        return $formatted;
     }
 }

@@ -31,36 +31,14 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Ora de început</label>
-                    <input type="time" name="start_time" id="start_time" class="form-control"
-                           value="<?= e($isEdit ? (string) $activity['start_time'] : old('start_time')) ?>">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Ora de final</label>
-                    <input type="time" name="end_time" id="end_time" class="form-control <?= isset($errors['end_time']) ? 'is-invalid' : '' ?>"
-                           value="<?= e($isEdit ? (string) $activity['end_time'] : old('end_time')) ?>">
-                    <?php if (isset($errors['end_time'])): ?><div class="invalid-feedback"><?= e($errors['end_time']) ?></div><?php endif; ?>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Număr de ore</label>
-                    <input type="number" step="0.25" min="0" max="24" name="duration_hours" id="duration_hours"
-                           class="form-control <?= isset($errors['duration_hours']) ? 'is-invalid' : '' ?>"
-                           value="<?= e($isEdit ? (string) $activity['duration_hours'] : old('duration_hours')) ?>">
-                    <div class="form-text">Calculat automat din ore, dacă sunt completate. Editabil dacă este justificat.</div>
-                    <?php if (isset($errors['duration_hours'])): ?><div class="invalid-feedback"><?= e($errors['duration_hours']) ?></div><?php endif; ?>
-                </div>
-            </div>
-
             <div class="mb-3">
                 <label class="form-label">Locație / zonă</label>
                 <input type="text" name="location" class="form-control" value="<?= e($isEdit ? (string) $activity['location'] : old('location')) ?>">
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Descriere *</label>
-                <textarea name="description" class="form-control <?= isset($errors['description']) ? 'is-invalid' : '' ?>" rows="3" required><?= e($isEdit ? $activity['description'] : old('description')) ?></textarea>
+                <label class="form-label">Descriere</label>
+                <textarea name="description" class="form-control <?= isset($errors['description']) ? 'is-invalid' : '' ?>" rows="3"><?= e($isEdit ? $activity['description'] : old('description')) ?></textarea>
                 <?php if (isset($errors['description'])): ?><div class="invalid-feedback"><?= e($errors['description']) ?></div><?php endif; ?>
             </div>
 
@@ -74,21 +52,3 @@
         </form>
     </div>
 </div>
-
-<script>
-    // Calculează automat numărul de ore când sunt completate ambele ore.
-    const startEl = document.getElementById('start_time');
-    const endEl = document.getElementById('end_time');
-    const durationEl = document.getElementById('duration_hours');
-
-    function recalcDuration() {
-        if (startEl.value && endEl.value && endEl.value > startEl.value) {
-            const [sh, sm] = startEl.value.split(':').map(Number);
-            const [eh, em] = endEl.value.split(':').map(Number);
-            const hours = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-            durationEl.value = hours.toFixed(2);
-        }
-    }
-    startEl.addEventListener('change', recalcDuration);
-    endEl.addEventListener('change', recalcDuration);
-</script>

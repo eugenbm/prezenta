@@ -22,20 +22,6 @@
                     </select>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Ora de început</label>
-                    <input type="time" name="start_time" id="start_time" class="form-control" value="<?= e((string) $activity['start_time']) ?>">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Ora de final</label>
-                    <input type="time" name="end_time" id="end_time" class="form-control" value="<?= e((string) $activity['end_time']) ?>">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Număr de ore</label>
-                    <input type="number" step="0.25" min="0" max="24" name="duration_hours" id="duration_hours" class="form-control" value="<?= e((string) $activity['duration_hours']) ?>">
-                </div>
-            </div>
             <div class="mb-3">
                 <label class="form-label">Locație / zonă</label>
                 <input type="text" name="location" class="form-control" value="<?= e((string) $activity['location']) ?>">
@@ -54,18 +40,3 @@
         </form>
     </div>
 </div>
-
-<script>
-    const startEl = document.getElementById('start_time');
-    const endEl = document.getElementById('end_time');
-    const durationEl = document.getElementById('duration_hours');
-    function recalcDuration() {
-        if (startEl.value && endEl.value && endEl.value > startEl.value) {
-            const [sh, sm] = startEl.value.split(':').map(Number);
-            const [eh, em] = endEl.value.split(':').map(Number);
-            durationEl.value = (((eh * 60 + em) - (sh * 60 + sm)) / 60).toFixed(2);
-        }
-    }
-    startEl.addEventListener('change', recalcDuration);
-    endEl.addEventListener('change', recalcDuration);
-</script>

@@ -81,6 +81,26 @@ function route_url(string $query = ''): string
     return base_path() . '/index.php' . $query;
 }
 
+/**
+ * URL absolut (schemă + domeniu + cale) către o rută internă, pentru linkuri
+ * trimise prin email. Folosește config('app.url') dacă e setat, altfel îl
+ * deduce din cererea curentă.
+ */
+function absolute_url(string $query = ''): string
+{
+    $configured = rtrim((string) config('app.url', ''), '/');
+    if ($configured !== '') {
+        return $configured . '/index.php' . $query;
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $scheme = $https ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    return $scheme . '://' . $host . route_url($query);
+}
+
 /** Construiește un URL relativ către un asset din public/assets. */
 function asset_url(string $path): string
 {
@@ -90,12 +110,18 @@ function asset_url(string $path): string
 /** Construiește URL-ul siglei, din config('app.logo_path'). */
 function logo_url(): string
 {
-    return base_path() . '/' . ltrim((string) config('app.logo_path', '/assets/img/logo/salvamont-placeholder.svg'), '/');
+    return base_path() . '/' . ltrim((string) config('app.logo_path', '/assets/img/logo/salvamont-placeholder.png'), '/');
 }
 
 function app_name(): string
 {
     return (string) config('app.name', 'Salvamont Zărnești');
+}
+
+/** Obiectivul de zile cu activitate pe an calendaristic (implicit 20). */
+function annual_days_goal(): int
+{
+    return max(1, (int) config('app.annual_days_goal', 20));
 }
 
 /**
@@ -129,7 +155,7 @@ function e(?string $value): string
 /** Recuperează o valoare introdusă anterior într-un formular (după o eroare de validare). */
 function old(string $key, string $default = ''): string
 {
-    return e($_SESSION['_old'][$key] ?? $default);
+    return e((string) ($_SESSION['_old'][$key] ?? $default));
 }
 
 function flash_set(string $type, string $message): void
@@ -206,10 +232,38 @@ function require_role(string $role): void
 {
     require_login();
     $user = current_user();
-    if (!$user || $user['role'] !== $role) {
+    $userRole = $user['role'] ?? '';
+    // Rolurile de voluntar (aspirant, salvator, formator) au aceleași drepturi:
+    // orice rută care cere rolul 'applicant' e accesibilă tuturor acestor roluri.
+    $allowed = $userRole === $role
+        || ($role === 'applicant' && in_array($userRole, volunteer_roles(), true));
+    if (!$allowed) {
         http_response_code(403);
         die('Acces interzis: nu aveți permisiunea de a accesa această pagină.');
     }
+}
+
+/** Rolurile de tip voluntar, cu aceleași drepturi în aplicație ca aspirantul. */
+function volunteer_roles(): array
+{
+    return ['applicant', 'salvator', 'formator'];
+}
+
+/** Rolurile care pot fi atribuite unui cont, în ordinea afișată în formulare. */
+function assignable_roles(): array
+{
+    return array_merge(volunteer_roles(), ['admin']);
+}
+
+/** Eticheta lizibilă (în română) pentru un rol. */
+function role_label(string $role): string
+{
+    return match ($role) {
+        'admin' => 'Administrator',
+        'salvator' => 'Salvator Montan Atestat',
+        'formator' => 'Formator',
+        default => 'Aspirant',
+    };
 }
 
 function format_date_ro(?string $date): string

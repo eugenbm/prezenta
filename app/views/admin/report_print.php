@@ -44,7 +44,7 @@
 
     <table>
         <thead>
-            <tr><th>Voluntar</th><th>Tip</th><th>Data</th><th>Ore</th><th>Status</th></tr>
+            <tr><th>Voluntar</th><th>Tip</th><th>Data</th><th>Status</th></tr>
         </thead>
         <tbody>
         <?php foreach ($activities as $activity): ?>
@@ -52,12 +52,11 @@
                 <td><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
                 <td><?= e($activity['type_name']) ?></td>
                 <td><?= format_date_ro($activity['activity_date']) ?></td>
-                <td><?= $activity['duration_hours'] !== null ? number_format((float) $activity['duration_hours'], 1) : '—' ?></td>
                 <td><?= status_label($activity['status']) ?></td>
             </tr>
         <?php endforeach; ?>
         <?php if (!$activities): ?>
-            <tr><td colspan="5">Nicio activitate găsită pentru filtrele selectate.</td></tr>
+            <tr><td colspan="4">Nicio activitate găsită pentru filtrele selectate.</td></tr>
         <?php endif; ?>
         </tbody>
     </table>
@@ -65,7 +64,7 @@
     <div class="totals">
         Total activități: <?= count($activities) ?> &middot;
         Activități aprobate: <?= $totalApproved ?> &middot;
-        Total ore aprobate: <?= number_format($totalHours, 1) ?> h
+        Zile cu activitate: <?= $totalDays ?>
     </div>
 </body>
 </html>

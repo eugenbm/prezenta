@@ -16,7 +16,7 @@
                     <td><?= e($u['first_name'] . ' ' . $u['last_name']) ?></td>
                     <td><?= e($u['username']) ?></td>
                     <td><?= e($u['email']) ?></td>
-                    <td><?= $u['role'] === 'admin' ? 'Administrator' : 'Aspirant' ?></td>
+                    <td><?= e(role_label($u['role'])) ?></td>
                     <td>
                         <?php if ((int) $u['is_active'] === 1): ?>
                             <span class="badge status-badge badge-approved">Activ</span>

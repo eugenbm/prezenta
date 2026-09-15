@@ -7,6 +7,7 @@ namespace App\Core;
 use App\Controllers\AdminController;
 use App\Controllers\ApplicantController;
 use App\Controllers\AuthController;
+use App\Controllers\PasswordController;
 use App\Controllers\SetupController;
 use App\Models\User;
 
@@ -21,6 +22,7 @@ final class App
         'login' => [AuthController::class, 'login', 'guest'],
         'logout' => [AuthController::class, 'logout', null],
         'setup' => [SetupController::class, 'index', 'guest'],
+        'set-password' => [PasswordController::class, 'setPassword', 'guest'],
 
         'applicant/dashboard' => [ApplicantController::class, 'dashboard', 'applicant'],
         'applicant/activities' => [ApplicantController::class, 'activities', 'applicant'],
@@ -35,12 +37,18 @@ final class App
         'admin/users/toggle' => [AdminController::class, 'toggleUser', 'admin'],
         'admin/users/reset-password' => [AdminController::class, 'resetPassword', 'admin'],
         'admin/activities' => [AdminController::class, 'activities', 'admin'],
+        'admin/activity/create' => [AdminController::class, 'createActivity', 'admin'],
         'admin/activity/edit' => [AdminController::class, 'editActivity', 'admin'],
         'admin/activity/approve' => [AdminController::class, 'approveActivity', 'admin'],
         'admin/activity/reject' => [AdminController::class, 'rejectActivity', 'admin'],
         'admin/reports' => [AdminController::class, 'reports', 'admin'],
         'admin/reports/export-csv' => [AdminController::class, 'exportCsv', 'admin'],
         'admin/reports/print' => [AdminController::class, 'printReport', 'admin'],
+        'admin/case-sheets' => [AdminController::class, 'caseSheets', 'admin'],
+        'admin/case-sheet/create' => [AdminController::class, 'caseSheet', 'admin'],
+        'admin/case-sheet/print' => [AdminController::class, 'printCaseSheet', 'admin'],
+        'admin/case-sheet/download' => [AdminController::class, 'downloadCaseSheet', 'admin'],
+        'admin/case-sheet/delete' => [AdminController::class, 'deleteCaseSheet', 'admin'],
     ];
 
     public function run(): void

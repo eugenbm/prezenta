@@ -35,16 +35,15 @@
                 <label class="form-label">Rol *</label>
                 <?php $selectedRole = $isEdit ? $editUser['role'] : old('role', 'applicant'); ?>
                 <select name="role" class="form-select <?= isset($errors['role']) ? 'is-invalid' : '' ?>" required>
-                    <option value="applicant" <?= $selectedRole === 'applicant' ? 'selected' : '' ?>>Aspirant</option>
-                    <option value="admin" <?= $selectedRole === 'admin' ? 'selected' : '' ?>>Administrator</option>
+                    <?php foreach (assignable_roles() as $roleOption): ?>
+                        <option value="<?= e($roleOption) ?>" <?= $selectedRole === $roleOption ? 'selected' : '' ?>><?= e(role_label($roleOption)) ?></option>
+                    <?php endforeach; ?>
                 </select>
                 <?php if (isset($errors['role'])): ?><div class="invalid-feedback"><?= e($errors['role']) ?></div><?php endif; ?>
             </div>
             <?php if (!$isEdit): ?>
-            <div class="mb-4">
-                <label class="form-label">Parolă inițială * (minim 10 caractere)</label>
-                <input type="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" required>
-                <?php if (isset($errors['password'])): ?><div class="invalid-feedback"><?= e($errors['password']) ?></div><?php endif; ?>
+            <div class="alert alert-info small mb-4">
+                Nu setați o parolă aici. După creare, utilizatorul primește automat un email cu numele de utilizator și un link prin care își setează singur parola (valabil 48 de ore).
             </div>
             <?php endif; ?>
 
