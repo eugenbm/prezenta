@@ -1,3 +1,19 @@
+<?php
+if (!function_exists('date_ro_display')) {
+    function date_ro_display($value)
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+        $d = DateTime::createFromFormat('Y-m-d', $value);
+        if ($d === false) {
+            $d = DateTime::createFromFormat('d/m/Y', $value);
+        }
+        return $d ? $d->format('d/m/Y') : $value;
+    }
+}
+?>
 <h1 class="h3 mb-4">Fișă de caz</h1>
 
 <div class="card">
@@ -14,7 +30,10 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Data</label>
-                    <input type="date" name="data_fisa" class="form-control" value="<?= e(old('data_fisa')) ?>">
+                    <div class="input-group date-ro-group">
+                        <input type="text" name="data_fisa" class="form-control date-ro" value="<?= e(date_ro_display(old('data_fisa'))) ?>" placeholder="zz/ll/aaaa" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" title="Format: zi/lună/an (zz/ll/aaaa)">
+                        <input type="date" class="date-ro-picker" tabindex="-1" aria-label="Alege data">
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -47,7 +66,10 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Data</label>
-                    <input type="date" name="alarmare_data" class="form-control" value="<?= e(old('alarmare_data')) ?>">
+                    <div class="input-group date-ro-group">
+                        <input type="text" name="alarmare_data" class="form-control date-ro" value="<?= e(date_ro_display(old('alarmare_data'))) ?>" placeholder="zz/ll/aaaa" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" title="Format: zi/lună/an (zz/ll/aaaa)">
+                        <input type="date" class="date-ro-picker" tabindex="-1" aria-label="Alege data">
+                    </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Ora <span class="text-muted">(opțional)</span></label>
@@ -187,7 +209,10 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Data predare victimă</label>
-                    <input type="date" name="predare_data" class="form-control" value="<?= e(old('predare_data')) ?>">
+                    <div class="input-group date-ro-group">
+                        <input type="text" name="predare_data" class="form-control date-ro" value="<?= e(date_ro_display(old('predare_data'))) ?>" placeholder="zz/ll/aaaa" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" title="Format: zi/lună/an (zz/ll/aaaa)">
+                        <input type="date" class="date-ro-picker" tabindex="-1" aria-label="Alege data">
+                    </div>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Ora <span class="text-muted">(opțional)</span></label>
@@ -225,7 +250,10 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Data revenire bază Salvamont</label>
-                    <input type="date" name="revenire_data" class="form-control" value="<?= e(old('revenire_data')) ?>">
+                    <div class="input-group date-ro-group">
+                        <input type="text" name="revenire_data" class="form-control date-ro" value="<?= e(date_ro_display(old('revenire_data'))) ?>" placeholder="zz/ll/aaaa" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" title="Format: zi/lună/an (zz/ll/aaaa)">
+                        <input type="date" class="date-ro-picker" tabindex="-1" aria-label="Alege data">
+                    </div>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Ora <span class="text-muted">(opțional)</span></label>
@@ -242,3 +270,72 @@
         </form>
     </div>
 </div>
+
+<style>
+    /* Butonul de calendar (input date nativ) redus la iconi\u021ba de picker */
+    .date-ro-group .date-ro-picker {
+        flex: 0 0 auto;
+        width: 2.6rem;
+        border: 1px solid var(--bs-border-color, #ced4da);
+        border-left: 0;
+        border-top-right-radius: .375rem;
+        border-bottom-right-radius: .375rem;
+        background: #fff;
+        color: transparent;
+        cursor: pointer;
+    }
+    .date-ro-group .date-ro-picker::-webkit-datetime-edit,
+    .date-ro-group .date-ro-picker::-webkit-inner-spin-button,
+    .date-ro-group .date-ro-picker::-webkit-clear-button {
+        display: none;
+    }
+    .date-ro-group .date-ro-picker::-webkit-calendar-picker-indicator {
+        opacity: 1;
+        cursor: pointer;
+    }
+    .date-ro-group .date-ro {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+</style>
+<script>
+(function () {
+    function toRo(iso) {
+        var m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+    }
+    function toIso(ro) {
+        var m = ro.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        return m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+    }
+
+    // Sincronizeaz\u0103 calendarul nativ cu c\u00e2mpul text zz/ll/aaaa.
+    document.querySelectorAll('.date-ro-group').forEach(function (group) {
+        var text = group.querySelector('input.date-ro');
+        var picker = group.querySelector('input.date-ro-picker');
+        if (!text || !picker) { return; }
+        picker.value = toIso(text.value.trim());
+        picker.addEventListener('change', function () {
+            if (picker.value) {
+                text.value = toRo(picker.value);
+            }
+        });
+        text.addEventListener('change', function () {
+            picker.value = toIso(text.value.trim());
+        });
+    });
+
+    // La trimitere, convertim c\u00e2mpurile de dat\u0103 din zz/ll/aaaa \u00een aaaa-ll-zz
+    // pentru a p\u0103stra compatibilitatea cu salvarea pe server.
+    var form = document.querySelector('form[action*="case-sheet/create"]');
+    if (!form) { return; }
+    form.addEventListener('submit', function () {
+        form.querySelectorAll('input.date-ro').forEach(function (input) {
+            var iso = toIso(input.value.trim());
+            if (iso) {
+                input.value = iso;
+            }
+        });
+    });
+})();
+</script>
