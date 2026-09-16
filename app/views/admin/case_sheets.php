@@ -1,6 +1,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">Fișe de caz</h1>
-    <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary">Fișă nouă</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="<?= route_url('?route=admin/case-sheets/stats') ?>" class="btn btn-outline-secondary">Statistici</a>
+        <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary">Fișă nouă</a>
+    </div>
 </div>
 
 <div class="card">
@@ -38,6 +41,21 @@
         </div>
     </div>
 </div>
+<?php if ($page > 1 || $hasMore): ?>
+<nav class="d-flex justify-content-between align-items-center mt-3">
+    <?php if ($page > 1): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= route_url('?route=admin/case-sheets&page=' . ($page - 1)) ?>">← Anterioarele 10</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">← Anterioarele 10</span>
+    <?php endif; ?>
+    <span class="text-muted small">Pagina <?= (int) $page ?></span>
+    <?php if ($hasMore): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= route_url('?route=admin/case-sheets&page=' . ($page + 1)) ?>">Următoarele 10 →</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">Următoarele 10 →</span>
+    <?php endif; ?>
+</nav>
+<?php endif; ?>
 <?php $autoDownloadId = isset($_GET['download']) ? (int) $_GET['download'] : 0; ?>
 <script>
     // Descarcă PDF-ul ca fișier (fetch -> blob), pentru comportament consecvent

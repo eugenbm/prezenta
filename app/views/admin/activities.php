@@ -84,6 +84,33 @@
     </div>
 </div>
 
+<?php
+    $pageParams = array_filter([
+        'user_id' => $filters['user_id'] ?? '',
+        'activity_type_id' => $filters['activity_type_id'] ?? '',
+        'status' => $filters['status'] ?? '',
+        'date_from' => $filters['date_from'] ?? '',
+        'date_to' => $filters['date_to'] ?? '',
+    ], fn ($v) => $v !== '');
+    $extra = http_build_query($pageParams);
+    $pageUrl = fn (int $p) => route_url('?route=admin/activities' . ($extra !== '' ? '&' . $extra : '') . '&page=' . $p);
+?>
+<?php if ($page > 1 || $hasMore): ?>
+<nav class="d-flex justify-content-between align-items-center mt-3">
+    <?php if ($page > 1): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= $pageUrl($page - 1) ?>">← Anterioarele 10</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">← Anterioarele 10</span>
+    <?php endif; ?>
+    <span class="text-muted small">Pagina <?= (int) $page ?></span>
+    <?php if ($hasMore): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= $pageUrl($page + 1) ?>">Următoarele 10 →</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">Următoarele 10 →</span>
+    <?php endif; ?>
+</nav>
+<?php endif; ?>
+
 <?php foreach ($activities as $activity): ?>
     <?php if ($activity['status'] === 'pending'): ?>
     <div class="modal fade" id="reject<?= $activity['id'] ?>" tabindex="-1">

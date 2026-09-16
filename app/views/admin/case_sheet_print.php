@@ -82,6 +82,18 @@
         <?= $row('Contact victimă', $sheet['victima_contact']) ?>
         <?= $row('Localizare afecțiune medicală', $sheet['localizare_afectiune']) ?>
         <?= $row('Finalitate caz', $sheet['finalitate_caz']) ?>
+<?php foreach (($victims ?? []) as $i => $v): ?>
+        <tr class="section"><td colspan="2">Victimă <?= (int) $i + 2 ?></td></tr>
+        <?= $row('Nume și prenume', (string) $v['nume']) ?>
+        <?= $row('Vârstă', (string) $v['varsta']) ?>
+        <?= $row('Sex', (string) $v['sex']) ?>
+        <?= $row('Județ', (string) $v['judet']) ?>
+        <?= $row('Țară', (string) $v['tara']) ?>
+        <?= $row('Stare pacient', (string) $v['stare']) ?>
+        <?= $row('Contact victimă', (string) $v['contact']) ?>
+        <?= $row('Localizare afecțiune medicală', (string) $v['localizare_afectiune']) ?>
+        <?= $row('Finalitate caz', (string) $v['finalitate_caz']) ?>
+<?php endforeach; ?>
         <tr class="section"><td colspan="2">Transport și finalizare</td></tr>
         <?= $row('Data și ora predare victimă', $sheet['predare_datetime']) ?>
         <?= $row('Transport accidentat', $sheet['transport']) ?>

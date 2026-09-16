@@ -45,6 +45,7 @@ final class App
         'admin/reports/export-csv' => [AdminController::class, 'exportCsv', 'admin'],
         'admin/reports/print' => [AdminController::class, 'printReport', 'admin'],
         'admin/case-sheets' => [AdminController::class, 'caseSheets', 'admin'],
+        'admin/case-sheets/stats' => [AdminController::class, 'caseSheetStats', 'admin'],
         'admin/case-sheet/create' => [AdminController::class, 'caseSheet', 'admin'],
         'admin/case-sheet/print' => [AdminController::class, 'printCaseSheet', 'admin'],
         'admin/case-sheet/download' => [AdminController::class, 'downloadCaseSheet', 'admin'],

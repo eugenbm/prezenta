@@ -29,4 +29,30 @@ final class ActivityType
         $row = $stmt->fetch();
         return $row ?: null;
     }
+
+    public static function findByName(string $name): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM activity_types WHERE name = :name LIMIT 1');
+        $stmt->execute(['name' => $name]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** Găsește tipul după nume sau îl creează (activ) dacă lipsește. */
+    public static function findOrCreateByName(string $name): ?array
+    {
+        $existing = self::findByName($name);
+        if ($existing) {
+            return $existing;
+        }
+        try {
+            $stmt = Database::connection()->prepare(
+                'INSERT INTO activity_types (name, is_active) VALUES (:name, 1)'
+            );
+            $stmt->execute(['name' => $name]);
+        } catch (\PDOException $e) {
+            // Poate fi creat concurent sau tabelul poate cere coloane suplimentare.
+        }
+        return self::findByName($name);
+    }
 }

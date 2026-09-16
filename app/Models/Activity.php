@@ -152,7 +152,7 @@ final class Activity
         return $stmt->fetchAll();
     }
 
-    public static function listForAdmin(array $filters = []): array
+    public static function listForAdmin(array $filters = [], ?int $limit = null, int $offset = 0): array
     {
         $sql = self::SELECT_WITH_JOINS . ' WHERE 1 = 1';
         $params = [];
@@ -162,6 +162,9 @@ final class Activity
         }
         self::applyCommonFilters($sql, $params, $filters);
         $sql .= ' ORDER BY a.activity_date DESC, a.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, $offset);
+        }
 
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($params);
@@ -194,6 +197,15 @@ final class Activity
             self::SELECT_WITH_JOINS . ' WHERE a.user_id = :user_id ORDER BY a.created_at DESC LIMIT ' . (int) $limit
         );
         $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function recentForAdmin(int $limit = 8): array
+    {
+        $stmt = Database::connection()->prepare(
+            self::SELECT_WITH_JOINS . ' ORDER BY a.created_at DESC, a.id DESC LIMIT ' . (int) $limit
+        );
+        $stmt->execute();
         return $stmt->fetchAll();
     }
 

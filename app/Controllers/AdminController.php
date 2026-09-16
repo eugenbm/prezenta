@@ -11,6 +11,7 @@ use App\Models\Activity;
 use App\Models\ActivityType;
 use App\Models\AuditLog;
 use App\Models\CaseSheet;
+use App\Models\CaseSheetVictim;
 use App\Models\PasswordReset;
 use App\Models\User;
 
@@ -22,8 +23,9 @@ final class AdminController extends Controller
         $counts = Activity::countsGlobal();
         $pending = Activity::pendingForAdmin(5);
         $byType = Activity::reportByType();
+        $recent = Activity::recentForAdmin(8);
 
-        $this->render('admin/dashboard', compact('activeVolunteers', 'counts', 'pending', 'byType'));
+        $this->render('admin/dashboard', compact('activeVolunteers', 'counts', 'pending', 'byType', 'recent'));
     }
 
     // --- Voluntari -----------------------------------------------------
@@ -233,11 +235,17 @@ final class AdminController extends Controller
             'date_to' => $_GET['date_to'] ?? '',
         ];
 
-        $activities = Activity::listForAdmin(array_filter($filters));
+        $perPage = 10;
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        // Se cere un rând în plus pentru a ști dacă există pagina următoare, fără un COUNT separat.
+        $rows = Activity::listForAdmin(array_filter($filters), $perPage + 1, ($page - 1) * $perPage);
+        $hasMore = count($rows) > $perPage;
+        $activities = array_slice($rows, 0, $perPage);
+
         $types = ActivityType::allActive();
         $volunteers = array_filter(User::all(), fn ($u) => in_array($u['role'], volunteer_roles(), true));
 
-        $this->render('admin/activities', compact('activities', 'types', 'volunteers', 'filters'));
+        $this->render('admin/activities', compact('activities', 'types', 'volunteers', 'filters', 'page', 'hasMore'));
     }
 
     public function createActivity(): void
@@ -478,8 +486,20 @@ final class AdminController extends Controller
 
     public function caseSheets(): void
     {
-        $sheets = CaseSheet::all();
-        $this->render('admin/case_sheets', compact('sheets'));
+        $perPage = 10;
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $rows = CaseSheet::paginate($perPage + 1, ($page - 1) * $perPage);
+        $hasMore = count($rows) > $perPage;
+        $sheets = array_slice($rows, 0, $perPage);
+
+        $this->render('admin/case_sheets', compact('sheets', 'page', 'hasMore'));
+    }
+
+    /** Dashboard cu statistici bazate pe fișele de caz. */
+    public function caseSheetStats(): void
+    {
+        $stats = CaseSheet::statistics();
+        $this->render('admin/case_sheet_stats', compact('stats'));
     }
 
     /**
@@ -496,7 +516,14 @@ final class AdminController extends Controller
             $data = $this->collectCaseSheetInput($members);
             $data['created_by'] = (int) current_user()['id'];
             $id = CaseSheet::create($data);
+
+            if ($data['victime_multiple'] === 'Da') {
+                CaseSheetVictim::createMany($id, $this->collectCaseSheetVictims());
+            }
+
             AuditLog::record((int) current_user()['id'], 'case_sheet_created', 'case_sheet', $id);
+
+            $this->createSalvatorActivities($members, $data, $id);
 
             flash_set('success', 'Fișa de caz a fost salvată.');
             $this->redirect(route_url('?route=admin/case-sheets&download=' . $id));
@@ -506,8 +533,83 @@ final class AdminController extends Controller
         $current = current_user();
         $intocmitDefault = $current ? trim($current['first_name'] . ' ' . $current['last_name']) : '';
         $nextNumber = CaseSheet::nextNumber();
+        $types = ActivityType::allActive();
+        $defaultType = ActivityType::findByName('Intervenție Salvamont');
+        $defaultActivityTypeId = $defaultType ? (int) $defaultType['id'] : 0;
 
-        $this->render('admin/case_sheet', compact('members', 'intocmitDefault', 'nextNumber'));
+        $this->render('admin/case_sheet', compact('members', 'intocmitDefault', 'nextNumber', 'types', 'defaultActivityTypeId'));
+    }
+
+    /**
+     * Creează opțional câte o activitate (aprobată) pentru fiecare salvator
+     * selectat pe fișa de caz care are rol de voluntar. Se declanșează doar
+     * dacă utilizatorul a bifat opțiunea și a ales un tip de activitate valid.
+     */
+    private function createSalvatorActivities(array $members, array $sheet, int $sheetId): void
+    {
+        if ($this->input('create_activities') !== '1') {
+            return;
+        }
+
+        // Tipul ales; dacă lipsește/nevalid, se folosește (și se creează la nevoie) „Intervenție Salvamont”.
+        $type = ActivityType::find((int) ($_POST['activity_type_id'] ?? 0));
+        if (!$type || (int) $type['is_active'] !== 1) {
+            $type = ActivityType::findOrCreateByName('Intervenție Salvamont');
+        }
+        if (!$type || (int) ($type['id'] ?? 0) === 0) {
+            return;
+        }
+
+        // Data activității = data fișei (fără a depăși ziua curentă); implicit azi.
+        $date = $sheet['data_fisa'] ?: date('Y-m-d');
+        if ($date > date('Y-m-d')) {
+            $date = date('Y-m-d');
+        }
+
+        $byId = [];
+        foreach ($members as $m) {
+            $byId[(int) $m['id']] = $m;
+        }
+
+        $location = trim(implode(', ', array_filter([
+            $sheet['masiv_montan'], $sheet['loc_producere'], $sheet['locatie_judet'],
+        ])), ', ');
+
+        $description = 'Intervenție Salvamont';
+        if ($sheet['nr_fisa'] !== '') {
+            $description .= ' — fișa nr. ' . $sheet['nr_fisa'];
+        }
+        if ($sheet['tip_eveniment'] !== '') {
+            $description .= ' (' . $sheet['tip_eveniment'] . ')';
+        }
+
+        $adminId = (int) current_user()['id'];
+        $selectedIds = array_map('intval', (array) ($_POST['salvatori'] ?? []));
+        $created = 0;
+        foreach ($selectedIds as $sid) {
+            $user = $byId[$sid] ?? null;
+            if (!$user || !in_array($user['role'], volunteer_roles(), true)) {
+                continue;
+            }
+            $activityId = Activity::create([
+                'user_id' => $sid,
+                'activity_type_id' => (int) $type['id'],
+                'activity_date' => $date,
+                'location' => $location,
+                'description' => $description,
+                'notes' => 'Generată automat din fișa de caz nr. ' . ($sheet['nr_fisa'] ?: (string) $sheetId) . '.',
+                'status' => 'approved',
+            ]);
+            Activity::approve($activityId, $adminId);
+            AuditLog::record($adminId, 'activity_created_from_case_sheet', 'activity', $activityId);
+            $created++;
+        }
+
+        if ($created > 0) {
+            flash_set('success', $created === 1
+                ? 'O activitate a fost înregistrată și aprobată pentru salvatorul selectat.'
+                : "{$created} activități au fost înregistrate și aprobate pentru salvatorii selectați.");
+        }
     }
 
     /** Versiune printabilă (export PDF) a unei fișe de caz salvate. */
@@ -521,8 +623,9 @@ final class AdminController extends Controller
         }
 
         $sheet = $this->caseSheetForDisplay($row);
+        $victims = CaseSheetVictim::forSheet($id);
         $autoprint = isset($_GET['autoprint']);
-        $this->renderPartialView('admin/case_sheet_print', compact('sheet', 'autoprint'));
+        $this->renderPartialView('admin/case_sheet_print', compact('sheet', 'victims', 'autoprint'));
     }
 
     /** Descarcă fișa de caz ca fișier PDF generat pe server (fără print din browser). */
@@ -561,8 +664,18 @@ final class AdminController extends Controller
             [['Sex', $s['victima_sex']], ['Județ', $s['victima_judet']], ['Țară', $s['victima_tara']]],
             [['Stare pacient', $s['victima_stare']], ['Contact victimă', $s['victima_contact']]],
             [['Localizare afecțiune', $s['localizare_afectiune']]],
+            [['Finalitate caz', $s['finalitate_caz']]],
         ]);
-        $pdf->row('Finalitate caz', $s['finalitate_caz']);
+        $victims = CaseSheetVictim::forSheet($id);
+        foreach ($victims as $i => $v) {
+            $pdf->group('Victimă ' . ($i + 2), [
+                [['Nume și prenume', (string) $v['nume']], ['Vârstă', (string) $v['varsta']]],
+                [['Sex', (string) $v['sex']], ['Județ', (string) $v['judet']], ['Țară', (string) $v['tara']]],
+                [['Stare pacient', (string) $v['stare']], ['Contact victimă', (string) $v['contact']]],
+                [['Localizare afecțiune', (string) $v['localizare_afectiune']]],
+                [['Finalitate caz', (string) $v['finalitate_caz']]],
+            ]);
+        }
         $pdf->group('Transport și finalizare', [
             [['Predare victimă', $s['predare_datetime']], ['Transport accidentat', $s['transport']]],
             [['Mod evacuare', $s['mod_evacuare']], ['Predată către', $s['predata_catre']]],
@@ -661,6 +774,39 @@ final class AdminController extends Controller
             'revenire_ora' => $this->normalizeTime($this->input('revenire_ora')),
             'intocmit' => $this->input('intocmit'),
         ];
+    }
+
+    /**
+     * Adună victimele suplimentare trimise din formular (câmpuri sub numele
+     * `victime[i][...]`). Ignoră intrările complet goale.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function collectCaseSheetVictims(): array
+    {
+        $raw = $_POST['victime'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $fields = ['nume', 'varsta', 'sex', 'judet', 'tara', 'stare', 'contact', 'localizare_afectiune', 'finalitate_caz'];
+        $victims = [];
+        foreach ($raw as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $victim = [];
+            foreach ($fields as $field) {
+                $victim[$field] = trim((string) ($entry[$field] ?? ''));
+            }
+            if (implode('', $victim) === '') {
+                continue;
+            }
+            $victim['sex'] = in_array($victim['sex'], ['M', 'F'], true) ? $victim['sex'] : '';
+            $victims[] = $victim;
+        }
+
+        return $victims;
     }
 
     private function normalizeDate(string $date): ?string

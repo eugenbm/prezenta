@@ -112,6 +112,40 @@
     </div>
 </div>
 
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Activități recente</span>
+        <a href="<?= route_url('?route=admin/activities') ?>" class="small">Vezi toate</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+        <table class="table table-hover table-stack mb-0 align-middle">
+            <thead><tr><th>Aspirant</th><th>Data</th><th>Tip</th><th>Status</th></tr></thead>
+            <tbody>
+            <?php if (empty($recent)): ?>
+                <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nicio activitate înregistrată.</td></tr>
+            <?php endif; ?>
+            <?php foreach (($recent ?? []) as $activity): ?>
+                <?php
+                    $statusBadge = [
+                        'approved' => ['Aprobată', 'bg-success'],
+                        'pending' => ['În așteptare', 'bg-warning text-dark'],
+                        'rejected' => ['Respinsă', 'bg-danger'],
+                    ][$activity['status']] ?? [$activity['status'], 'bg-secondary'];
+                ?>
+                <tr>
+                    <td data-label="Aspirant"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
+                    <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
+                    <td data-label="Tip"><?= e($activity['type_name']) ?></td>
+                    <td data-label="Status"><span class="badge <?= $statusBadge[1] ?>"><?= e($statusBadge[0]) ?></span></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
 <?php foreach ($pending as $activity): ?>
     <div class="modal fade" id="reject<?= $activity['id'] ?>" tabindex="-1">
         <div class="modal-dialog">
