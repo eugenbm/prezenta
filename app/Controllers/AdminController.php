@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\ContractPdf;
 use App\Core\Mailer;
 use App\Core\Pdf;
 use App\Models\Activity;
@@ -12,6 +13,9 @@ use App\Models\ActivityType;
 use App\Models\AuditLog;
 use App\Models\CaseSheet;
 use App\Models\CaseSheetVictim;
+use App\Models\Contract;
+use App\Models\InventoryAssignment;
+use App\Models\InventoryItem;
 use App\Models\PasswordReset;
 use App\Models\User;
 
@@ -34,6 +38,29 @@ final class AdminController extends Controller
     {
         $users = User::all();
         $this->render('admin/users', compact('users'));
+    }
+
+    public function userInventory(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+
+        $volunteers = array_values(array_filter(
+            User::all(),
+            static fn ($u) => $u['role'] !== 'admin'
+        ));
+
+        $volunteer = null;
+        $assignments = [];
+        if ($id > 0) {
+            $volunteer = User::find($id);
+            if (!$volunteer || $volunteer['role'] === 'admin') {
+                http_response_code(404);
+                die('Voluntarul nu a fost găsit.');
+            }
+            $assignments = InventoryAssignment::forUser($id);
+        }
+
+        $this->render('admin/user_inventory', compact('volunteers', 'volunteer', 'assignments'));
     }
 
     public function createUser(): void
@@ -117,6 +144,26 @@ final class AdminController extends Controller
             HTML;
     }
 
+    private function passwordResetEmail(string $firstName, string $username, string $link): string
+    {
+        $appName = e(app_name());
+        $firstName = e($firstName);
+        $username = e($username);
+        $linkSafe = e($link);
+
+        return <<<HTML
+            <div style="font-family:Arial,Helvetica,sans-serif;color:#2b2523;line-height:1.6;">
+                <p>Bună, {$firstName},</p>
+                <p>Parola contului tău din aplicația <strong>{$appName}</strong> a fost resetată de un administrator.</p>
+                <p>Numele tău de utilizator este: <strong>{$username}</strong></p>
+                <p>Pentru a-ți seta o parolă nouă, accesează linkul de mai jos (valabil 48 de ore):</p>
+                <p><a href="{$linkSafe}" style="display:inline-block;background:#841821;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">Setează-ți parola</a></p>
+                <p style="font-size:13px;color:#777;">Dacă butonul nu funcționează, copiază acest link în browser:<br>{$linkSafe}</p>
+                <p style="font-size:13px;color:#777;">Dacă nu ai solicitat această resetare, contactează un administrator.</p>
+            </div>
+            HTML;
+    }
+
     public function editUser(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
@@ -181,7 +228,6 @@ final class AdminController extends Controller
     public function resetPassword(): void
     {
         $id = (int) ($_POST['id'] ?? 0);
-        $newPassword = (string) ($_POST['new_password'] ?? '');
         $user = User::find($id);
 
         if (!$user) {
@@ -189,16 +235,28 @@ final class AdminController extends Controller
             die('Utilizatorul nu a fost găsit.');
         }
 
-        if (strlen($newPassword) < 10) {
-            flash_set('error', 'Noua parolă trebuie să aibă cel puțin 10 caractere.');
-            $this->redirect(route_url('?route=admin/users'));
-            return;
-        }
-
-        User::updatePassword($id, password_hash($newPassword, PASSWORD_DEFAULT));
+        // Parolă temporară aleatorie — utilizatorul își setează propria parolă prin linkul din email.
+        User::updatePassword($id, password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT));
         AuditLog::record((int) current_user()['id'], 'password_reset', 'user', $id);
 
-        flash_set('success', 'Parola a fost resetată cu succes.');
+        $token = PasswordReset::create($id);
+        $link = absolute_url('?route=set-password&token=' . urlencode($token));
+        $fullName = trim($user['first_name'] . ' ' . $user['last_name']);
+
+        try {
+            Mailer::send($user['email'], $fullName, 'Resetare parolă — ' . app_name(), $this->passwordResetEmail($user['first_name'], $user['username'], $link));
+            flash_set('success', 'Parola a fost resetată. Un email cu linkul de resetare a fost trimis la ' . $user['email'] . '.');
+        } catch (\Throwable $e) {
+            error_log('Trimitere email resetare parolă eșuată: ' . $e->getMessage());
+            @file_put_contents(
+                dirname(__DIR__, 2) . '/storage/logs/mail.log',
+                '[' . date('Y-m-d H:i:s') . '] ' . $e->getMessage() . "\n",
+                FILE_APPEND
+            );
+            $reason = config('app.debug') ? ' (motiv: ' . $e->getMessage() . ')' : '';
+            flash_set('error', 'Parola a fost resetată, dar emailul nu a putut fi trimis' . $reason . '. Trimiteți manual acest link utilizatorului: ' . $link);
+        }
+
         $this->redirect(route_url('?route=admin/users'));
     }
 
@@ -404,7 +462,6 @@ final class AdminController extends Controller
             'date_to' => $_GET['date_to'] ?? '',
         ];
 
-        $activities = Activity::listForAdmin(array_filter($filters));
         $byType = Activity::reportByType(array_filter($filters));
         $byVolunteer = Activity::reportByVolunteer(array_filter($filters));
         $types = ActivityType::allActive();
@@ -414,7 +471,14 @@ final class AdminController extends Controller
         $annualDays = Activity::approvedDaysInYearForApplicants($year);
         $annualGoal = annual_days_goal();
 
-        $this->render('admin/reports', compact('activities', 'byType', 'byVolunteer', 'types', 'volunteers', 'filters', 'year', 'annualDays', 'annualGoal'));
+        // Detaliul activităților este paginat (10/pagină) fără a afecta exportul CSV/PDF.
+        $perPage = 10;
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $rows = Activity::listForAdmin(array_filter($filters), $perPage + 1, ($page - 1) * $perPage);
+        $hasMore = count($rows) > $perPage;
+        $activities = array_slice($rows, 0, $perPage);
+
+        $this->render('admin/reports', compact('activities', 'byType', 'byVolunteer', 'types', 'volunteers', 'filters', 'year', 'annualDays', 'annualGoal', 'page', 'hasMore'));
     }
 
     public function exportCsv(): void
@@ -710,6 +774,255 @@ final class AdminController extends Controller
 
         flash_set('success', 'Fișa de caz a fost ștearsă.');
         $this->redirect(route_url('?route=admin/case-sheets'));
+    }
+
+    // --- Contracte de voluntariat ------------------------------------------
+
+    public function contracts(): void
+    {
+        $contracts = Contract::all();
+        $this->render('admin/contracts', compact('contracts'));
+    }
+
+    /** Descarcă contractul semnat al unui voluntar ca PDF. */
+    public function downloadContract(): void
+    {
+        [$pdf, $filename] = $this->buildContractPdf();
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdf));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+        echo $pdf;
+        exit;
+    }
+
+    /** Previzualizează contractul semnat al unui voluntar (în browser, nu descărcare). */
+    public function previewContract(): void
+    {
+        [$pdf, $filename] = $this->buildContractPdf();
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($pdf));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        echo $pdf;
+        exit;
+    }
+
+    /** @return array{0: string, 1: string} [conținut PDF, nume fișier] */
+    private function buildContractPdf(): array
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $contract = Contract::find($id);
+        if (!$contract) {
+            http_response_code(404);
+            die('Contractul nu a fost găsit.');
+        }
+
+        $jpeg = base64_decode((string) $contract['signature_data'], true);
+        if ($jpeg === false) {
+            http_response_code(500);
+            die('Semnătura stocată este coruptă.');
+        }
+
+        $pdf = ContractPdf::fill((string) $contract['contract_type'], (string) $contract['volunteer_name'], $jpeg);
+
+        $slug = preg_replace('/[^A-Za-z0-9_-]+/', '-', $contract['last_name'] . '-' . $contract['first_name']);
+        $slug = trim((string) $slug, '-');
+        $filename = 'contract-' . ($slug !== '' ? $slug : (string) $id) . '.pdf';
+
+        return [$pdf, $filename];
+    }
+
+    // --- Inventar ------------------------------------------------------
+
+    private const INVENTORY_PAGE_SIZE = 20;
+
+    public function inventory(): void
+    {
+        $pageSize = self::INVENTORY_PAGE_SIZE;
+        $items = InventoryItem::paginate($pageSize, 0);
+        $total = InventoryItem::countItems();
+        $this->render('admin/inventory', compact('items', 'total', 'pageSize'));
+    }
+
+    public function inventoryMore(): void
+    {
+        $offset = max(0, (int) ($_GET['offset'] ?? 0));
+        $items = InventoryItem::paginate(self::INVENTORY_PAGE_SIZE, $offset);
+        $this->renderPartialView('admin/_inventory_rows', compact('items'));
+    }
+
+    public function createInventoryItem(): void
+    {
+        if ($this->isPost()) {
+            $this->storeInventoryItem();
+            return;
+        }
+
+        $this->render('admin/inventory_form', ['item' => null]);
+    }
+
+    public function editInventoryItem(): void
+    {
+        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+        $item = InventoryItem::find($id);
+        if (!$item) {
+            http_response_code(404);
+            die('Obiectul de inventar nu a fost găsit.');
+        }
+
+        if ($this->isPost()) {
+            $this->storeInventoryItem($item);
+            return;
+        }
+
+        $this->render('admin/inventory_form', compact('item'));
+    }
+
+    private function storeInventoryItem(?array $item = null): void
+    {
+        $name = $this->input('name');
+        $description = $this->input('description');
+        $quantity = (int) $this->input('total_quantity', '0');
+
+        $errors = [];
+        if ($name === '') {
+            $errors['name'] = 'Introduceți denumirea obiectului.';
+        }
+        if ($quantity < 0) {
+            $errors['total_quantity'] = 'Cantitatea nu poate fi negativă.';
+        }
+        // La editare, cantitatea totală nu poate scădea sub numărul deja atribuit.
+        if ($item !== null && $quantity < (int) $item['assigned_quantity']) {
+            $errors['total_quantity'] = 'Cantitatea totală nu poate fi mai mică decât cele ' . (int) $item['assigned_quantity'] . ' bucăți deja atribuite.';
+        }
+
+        if ($errors) {
+            set_old_and_errors([
+                'name' => $name, 'description' => $description, 'total_quantity' => (string) $quantity,
+            ], $errors);
+            $url = $item !== null
+                ? route_url('?route=admin/inventory/edit&id=' . (int) $item['id'])
+                : route_url('?route=admin/inventory/create');
+            $this->redirect($url);
+            return;
+        }
+
+        if ($item !== null) {
+            InventoryItem::update((int) $item['id'], [
+                'name' => $name, 'description' => $description, 'total_quantity' => $quantity,
+            ]);
+            AuditLog::record((int) current_user()['id'], 'inventory_item_updated', 'inventory_item', (int) $item['id']);
+            flash_set('success', 'Obiectul de inventar a fost actualizat.');
+        } else {
+            $id = InventoryItem::create([
+                'name' => $name, 'description' => $description, 'total_quantity' => $quantity,
+                'created_by' => (int) current_user()['id'],
+            ]);
+            AuditLog::record((int) current_user()['id'], 'inventory_item_created', 'inventory_item', $id);
+            flash_set('success', 'Obiectul de inventar a fost adăugat.');
+        }
+
+        $this->redirect(route_url('?route=admin/inventory'));
+    }
+
+    public function deleteInventoryItem(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $item = InventoryItem::find($id);
+        if (!$item) {
+            http_response_code(404);
+            die('Obiectul de inventar nu a fost găsit.');
+        }
+
+        InventoryItem::delete($id);
+        AuditLog::record((int) current_user()['id'], 'inventory_item_deleted', 'inventory_item', $id);
+
+        flash_set('success', 'Obiectul de inventar a fost șters.');
+        $this->redirect(route_url('?route=admin/inventory'));
+    }
+
+    /** Detaliul unui obiect: atribuirile curente + formular de atribuire. */
+    public function inventoryItem(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $item = InventoryItem::find($id);
+        if (!$item) {
+            http_response_code(404);
+            die('Obiectul de inventar nu a fost găsit.');
+        }
+
+        $assignments = InventoryAssignment::forItem($id);
+        $assignedUserIds = array_map(static fn ($a) => (int) $a['user_id'], $assignments);
+        $volunteers = array_filter(
+            User::all(),
+            static fn ($u) => $u['role'] !== 'admin'
+                && (int) $u['is_active'] === 1
+                && !in_array((int) $u['id'], $assignedUserIds, true)
+        );
+        $available = (int) $item['total_quantity'] - (int) $item['assigned_quantity'];
+
+        $this->render('admin/inventory_item', compact('item', 'assignments', 'volunteers', 'available'));
+    }
+
+    public function assignInventory(): void
+    {
+        $itemId = (int) ($_POST['item_id'] ?? 0);
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $quantity = (int) ($_POST['quantity'] ?? 0);
+
+        $item = InventoryItem::find($itemId);
+        if (!$item) {
+            http_response_code(404);
+            die('Obiectul de inventar nu a fost găsit.');
+        }
+
+        $user = User::find($userId);
+        $redirect = route_url('?route=admin/inventory/item&id=' . $itemId);
+
+        if (!$user || $user['role'] === 'admin') {
+            flash_set('error', 'Selectați un voluntar valid.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        if ($quantity < 1) {
+            flash_set('error', 'Cantitatea atribuită trebuie să fie cel puțin 1.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $available = (int) $item['total_quantity'] - InventoryAssignment::assignedQuantity($itemId);
+        if ($quantity > $available) {
+            flash_set('error', 'Nu există suficiente bucăți disponibile (disponibil: ' . $available . ').');
+            $this->redirect($redirect);
+            return;
+        }
+
+        InventoryAssignment::assign($itemId, $userId, $quantity, (int) current_user()['id']);
+        AuditLog::record((int) current_user()['id'], 'inventory_assigned', 'inventory_item', $itemId, 'user ' . $userId . ' x' . $quantity);
+
+        flash_set('success', 'Obiectul a fost atribuit voluntarului.');
+        $this->redirect($redirect);
+    }
+
+    public function unassignInventory(): void
+    {
+        $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
+        $assignment = InventoryAssignment::find($assignmentId);
+        if (!$assignment) {
+            http_response_code(404);
+            die('Atribuirea nu a fost găsită.');
+        }
+
+        InventoryAssignment::unassign($assignmentId);
+        AuditLog::record((int) current_user()['id'], 'inventory_unassigned', 'inventory_item', (int) $assignment['item_id'], 'user ' . (int) $assignment['user_id']);
+
+        flash_set('success', 'Atribuirea a fost retrasă.');
+        $this->redirect(route_url('?route=admin/inventory/item&id=' . (int) $assignment['item_id']));
     }
 
     /**

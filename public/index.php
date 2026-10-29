@@ -59,4 +59,16 @@ session_set_cookie_params([
 ]);
 session_start();
 
+// --- Headere de securitate --------------------------------------------------
+if (!headers_sent()) {
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Cross-Origin-Opener-Policy: same-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+    if ($isHttps) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+}
+
 (new App())->run();

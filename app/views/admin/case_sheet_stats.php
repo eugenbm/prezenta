@@ -41,20 +41,22 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h1 class="h3 mb-0">Statistici fișe de caz</h1>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= route_url('?route=admin/case-sheets') ?>" class="btn btn-outline-secondary btn-sm">Lista fișelor</a>
-        <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary btn-sm">+ Fișă nouă</a>
+        <a href="<?= route_url('?route=admin/case-sheets') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-list-ul me-1"></i>Lista fișelor</a>
+        <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-plus me-1"></i>Fișă nouă</a>
     </div>
 </div>
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
         <div class="stat-card h-100">
+            <div class="stat-icon"><i class="bi bi-file-earmark-text-fill"></i></div>
             <div class="stat-value"><?= (int) $stats['total'] ?></div>
             <div class="stat-label">Total fișe</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-success h-100">
+            <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
             <div class="stat-value"><?= (int) $stats['this_year'] ?></div>
             <div class="stat-label">
                 Anul curent
@@ -66,12 +68,14 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-pending h-100">
+            <div class="stat-icon"><i class="bi bi-calendar-event-fill"></i></div>
             <div class="stat-value"><?= (int) $stats['this_month'] ?></div>
             <div class="stat-label">Luna curentă</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-danger h-100">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
             <div class="stat-value"><?= (int) $stats['multiple_victims'] ?></div>
             <div class="stat-label">Cu victime multiple</div>
         </div>
@@ -81,18 +85,21 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
         <div class="stat-card h-100">
+            <div class="stat-icon"><i class="bi bi-person-lines-fill"></i></div>
             <div class="stat-value"><?= (int) $stats['total_victims'] ?></div>
             <div class="stat-label">Total victime</div>
         </div>
     </div>
     <div class="col-6 col-md-4">
         <div class="stat-card h-100">
+            <div class="stat-icon"><i class="bi bi-heart-pulse-fill"></i></div>
             <div class="stat-value"><?= $stats['avg_victim_age'] !== null ? (int) $stats['avg_victim_age'] . ' ani' : '—' ?></div>
             <div class="stat-label">Vârsta medie victime</div>
         </div>
     </div>
     <div class="col-12 col-md-4">
         <div class="stat-card h-100">
+            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
             <div class="stat-value"><?= e($fmtDuration($stats['avg_intervention_minutes'])) ?></div>
             <div class="stat-label">Durată medie intervenție</div>
         </div>

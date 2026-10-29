@@ -1,9 +1,9 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h1 class="h3 mb-0">Dashboard administrator</h1>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= route_url('?route=admin/activity/create') ?>" class="btn btn-primary btn-sm">+ Adaugă activitate</a>
-        <a href="<?= route_url('?route=admin/reports') ?>" class="btn btn-outline-secondary btn-sm">Rapoarte</a>
-        <a href="<?= route_url('?route=admin/users') ?>" class="btn btn-outline-secondary btn-sm">Conturi</a>
+        <a href="<?= route_url('?route=admin/activity/create') ?>" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Adaugă activitate</a>
+        <a href="<?= route_url('?route=admin/reports') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-bar-chart-line me-1"></i>Rapoarte</a>
+        <a href="<?= route_url('?route=admin/users') ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-people me-1"></i>Conturi</a>
     </div>
 </div>
 
@@ -11,6 +11,7 @@
     <div class="col-6 col-md-3">
         <a href="<?= route_url('?route=admin/users') ?>" class="text-decoration-none">
             <div class="stat-card h-100">
+                <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
                 <div class="stat-value"><?= $activeVolunteers ?></div>
                 <div class="stat-label">Aspiranți activi</div>
             </div>
@@ -19,6 +20,7 @@
     <div class="col-6 col-md-3">
         <a href="<?= route_url('?route=admin/activities&status=pending') ?>" class="text-decoration-none">
             <div class="stat-card stat-pending h-100">
+                <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
                 <div class="stat-value"><?= $counts['pending'] ?></div>
                 <div class="stat-label">În așteptare</div>
             </div>
@@ -27,6 +29,7 @@
     <div class="col-6 col-md-3">
         <a href="<?= route_url('?route=admin/activities&status=approved') ?>" class="text-decoration-none">
             <div class="stat-card stat-success h-100">
+                <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
                 <div class="stat-value"><?= $counts['approved'] ?></div>
                 <div class="stat-label">Aprobate</div>
             </div>
@@ -35,6 +38,7 @@
     <div class="col-6 col-md-3">
         <a href="<?= route_url('?route=admin/activities&status=rejected') ?>" class="text-decoration-none">
             <div class="stat-card stat-danger h-100">
+                <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
                 <div class="stat-value"><?= $counts['rejected'] ?></div>
                 <div class="stat-label">Respinse</div>
             </div>
@@ -54,14 +58,16 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                 <table class="table table-hover table-stack mb-0 align-middle">
-                    <thead><tr><th>Aspirant</th><th>Data</th><th>Tip</th><th></th></tr></thead>
+                    <thead><tr><th>Voluntar</th><th>Data</th><th>Tip</th><th></th></tr></thead>
                     <tbody>
                     <?php if (!$pending): ?>
-                        <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nicio activitate în așteptare.</td></tr>
+                        <tr><td colspan="4" class="cell-empty py-4">
+                            <div class="empty-state"><i class="bi bi-check2-all"></i>Nicio activitate în așteptare. Totul e la zi!</div>
+                        </td></tr>
                     <?php endif; ?>
                     <?php foreach ($pending as $activity): ?>
                         <tr>
-                            <td data-label="Aspirant"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
+                            <td data-label="Voluntar"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?> <?= role_badge($activity['volunteer_role']) ?></td>
                             <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
                             <td data-label="Tip"><?= e($activity['type_name']) ?></td>
                             <td data-label="Acțiuni" class="cell-actions text-end d-flex gap-1 flex-wrap justify-content-end">
@@ -120,10 +126,12 @@
     <div class="card-body p-0">
         <div class="table-responsive">
         <table class="table table-hover table-stack mb-0 align-middle">
-            <thead><tr><th>Aspirant</th><th>Data</th><th>Tip</th><th>Status</th></tr></thead>
+            <thead><tr><th>Voluntar</th><th>Data</th><th>Tip</th><th>Status</th></tr></thead>
             <tbody>
             <?php if (empty($recent)): ?>
-                <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nicio activitate înregistrată.</td></tr>
+                <tr><td colspan="4" class="cell-empty py-4">
+                    <div class="empty-state"><i class="bi bi-clipboard-x"></i>Nicio activitate înregistrată.</div>
+                </td></tr>
             <?php endif; ?>
             <?php foreach (($recent ?? []) as $activity): ?>
                 <?php
@@ -134,7 +142,7 @@
                     ][$activity['status']] ?? [$activity['status'], 'bg-secondary'];
                 ?>
                 <tr>
-                    <td data-label="Aspirant"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?></td>
+                    <td data-label="Voluntar"><?= e($activity['volunteer_first_name'] . ' ' . $activity['volunteer_last_name']) ?> <?= role_badge($activity['volunteer_role']) ?></td>
                     <td data-label="Data"><?= format_date_ro($activity['activity_date']) ?></td>
                     <td data-label="Tip"><?= e($activity['type_name']) ?></td>
                     <td data-label="Status"><span class="badge <?= $statusBadge[1] ?>"><?= e($statusBadge[0]) ?></span></td>

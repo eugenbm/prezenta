@@ -9,7 +9,7 @@
                     <dt class="col-5">Nume</dt><dd class="col-7"><?= e($user['first_name'] . ' ' . $user['last_name']) ?></dd>
                     <dt class="col-5">Utilizator</dt><dd class="col-7"><?= e($user['username']) ?></dd>
                     <dt class="col-5">Email</dt><dd class="col-7"><?= e($user['email']) ?></dd>
-                    <dt class="col-5">Rol</dt><dd class="col-7"><?= e(role_label($user['role'])) ?></dd>
+                    <dt class="col-5">Rol</dt><dd class="col-7"><?= role_badge($user['role']) ?></dd>
                     <dt class="col-5">Membru din</dt><dd class="col-7"><?= format_date_ro($user['created_at']) ?></dd>
                 </dl>
                 <p class="text-muted small mt-3 mb-0">Pentru schimbarea datelor sau resetarea parolei, contactați un administrator.</p>

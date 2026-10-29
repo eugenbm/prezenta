@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\ContractPdf;
 use App\Core\Mailer;
 use App\Models\Activity;
 use App\Models\ActivityType;
+use App\Models\AuditLog;
+use App\Models\Contract;
+use App\Models\InventoryAssignment;
+use App\Models\InventoryItem;
 use App\Models\User;
 
 final class ApplicantController extends Controller
@@ -88,10 +93,11 @@ final class ApplicantController extends Controller
         $type = ActivityType::find((int) $data['activity_type_id']);
         $typeName = $type['name'] ?? 'Activitate';
         $aspirantName = $aspirant['first_name'] . ' ' . $aspirant['last_name'];
+        $roleLabel = role_label($aspirant['role']);
         $dateRo = format_date_ro($data['activity_date']);
         $link = absolute_url('?route=admin/activities&status=pending');
         $subject = 'Activitate nouă de aprobat — ' . app_name();
-        $html = $this->newActivityEmail($aspirantName, $typeName, $dateRo, $link);
+        $html = $this->newActivityEmail($aspirantName, $roleLabel, $typeName, $dateRo, $link);
 
         $sent = 0;
         foreach ($admins as $admin) {
@@ -117,10 +123,11 @@ final class ApplicantController extends Controller
         );
     }
 
-    private function newActivityEmail(string $aspirantName, string $typeName, string $dateRo, string $link): string
+    private function newActivityEmail(string $aspirantName, string $roleLabel, string $typeName, string $dateRo, string $link): string
     {
         $appName = e(app_name());
         $aspirantName = e($aspirantName);
+        $roleLabel = e($roleLabel);
         $typeName = e($typeName);
         $dateRo = e($dateRo);
         $linkSafe = e($link);
@@ -129,7 +136,7 @@ final class ApplicantController extends Controller
             <div style="font-family:Arial,Helvetica,sans-serif;color:#2b2523;line-height:1.6;">
                 <p>O activitate nouă așteaptă aprobarea în <strong>{$appName}</strong>.</p>
                 <ul>
-                    <li><strong>Aspirant:</strong> {$aspirantName}</li>
+                    <li><strong>{$roleLabel}:</strong> {$aspirantName}</li>
                     <li><strong>Tip activitate:</strong> {$typeName}</li>
                     <li><strong>Data:</strong> {$dateRo}</li>
                 </ul>
@@ -187,6 +194,184 @@ final class ApplicantController extends Controller
         $annualGoal = annual_days_goal();
 
         $this->render('applicant/profile', compact('user', 'counts', 'year', 'annualDays', 'annualGoal'));
+    }
+
+    // --- Inventar (doar vizualizare) --------------------------------------
+
+    public function inventory(): void
+    {
+        $user = current_user();
+        $assignments = InventoryAssignment::forUser((int) $user['id']);
+        $this->render('applicant/inventory', compact('assignments'));
+    }
+
+    /** Voluntarul își poate adăuga singur obiecte (atribuite automat lui); nu le poate șterge. */
+    public function addInventoryItem(): void
+    {
+        if ($this->isPost()) {
+            $this->storeInventoryItem();
+            return;
+        }
+
+        $this->render('applicant/inventory_form');
+    }
+
+    private function storeInventoryItem(): void
+    {
+        $user = current_user();
+        $name = $this->input('name');
+        $description = $this->input('description');
+        $quantity = (int) $this->input('quantity', '1');
+
+        $errors = [];
+        if ($name === '') {
+            $errors['name'] = 'Introduceți denumirea obiectului.';
+        }
+        if ($quantity < 1) {
+            $errors['quantity'] = 'Cantitatea trebuie să fie cel puțin 1.';
+        }
+
+        if ($errors) {
+            set_old_and_errors([
+                'name' => $name, 'description' => $description, 'quantity' => (string) $quantity,
+            ], $errors);
+            $this->redirect(route_url('?route=applicant/inventory/add'));
+            return;
+        }
+
+        $itemId = InventoryItem::create([
+            'name' => $name,
+            'description' => $description,
+            'total_quantity' => $quantity,
+            'created_by' => (int) $user['id'],
+        ]);
+        InventoryAssignment::assign($itemId, (int) $user['id'], $quantity, (int) $user['id']);
+        AuditLog::record((int) $user['id'], 'inventory_item_self_added', 'inventory_item', $itemId);
+
+        flash_set('success', 'Obiectul a fost adăugat în inventarul tău.');
+        $this->redirect(route_url('?route=applicant/inventory'));
+    }
+
+    // --- Contract de voluntariat ------------------------------------------
+
+    public function contract(): void
+    {
+        if ($this->isPost()) {
+            $this->storeContract();
+            return;
+        }
+
+        $user = current_user();
+        $type = (string) $user['role'];
+        if (!ContractPdf::supports($type)) {
+            flash_set('error', 'Pentru rolul contului dumneavoastră nu există un model de contract.');
+            $this->redirect(route_url('?route=applicant/dashboard'));
+            return;
+        }
+
+        $contract = Contract::forUser((int) $user['id']);
+        $fullName = trim($user['last_name'] . ' ' . $user['first_name']);
+
+        $this->render('applicant/contract', compact('user', 'type', 'contract', 'fullName'));
+    }
+
+    private function storeContract(): void
+    {
+        $user = current_user();
+        $type = (string) $user['role'];
+
+        if (!ContractPdf::supports($type)) {
+            flash_set('error', 'Pentru rolul contului dumneavoastră nu există un model de contract.');
+            $this->redirect(route_url('?route=applicant/dashboard'));
+            return;
+        }
+
+        $jpeg = $this->decodeSignature((string) ($_POST['signature'] ?? ''));
+        if ($jpeg === null) {
+            flash_set('error', 'Semnătura lipsește sau este invalidă. Vă rugăm să semnați în casetă și să reîncercați.');
+            $this->redirect(route_url('?route=applicant/contract'));
+            return;
+        }
+
+        $fullName = trim($user['last_name'] . ' ' . $user['first_name']);
+        Contract::save((int) $user['id'], $type, $fullName, base64_encode($jpeg), $this->clientIp());
+        AuditLog::record((int) $user['id'], 'contract_signed', 'contract', (int) $user['id']);
+
+        flash_set('success', 'Contractul a fost semnat. Îl puteți descărca oricând din această pagină.');
+        $this->redirect(route_url('?route=applicant/contract'));
+    }
+
+    /** Afișează modelul de contract necompletat (pentru citire înainte de semnare). */
+    public function previewContract(): void
+    {
+        $user = current_user();
+        $path = ContractPdf::templatePath((string) $user['role']);
+        if ($path === null || !is_file($path)) {
+            http_response_code(404);
+            die('Modelul de contract nu a fost găsit.');
+        }
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="contract-model.pdf"');
+        header('Content-Length: ' . (string) filesize($path));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        readfile($path);
+        exit;
+    }
+
+    public function downloadContract(): void
+    {
+        $user = current_user();
+        $contract = Contract::forUser((int) $user['id']);
+        if (!$contract) {
+            flash_set('error', 'Nu aveți încă un contract semnat.');
+            $this->redirect(route_url('?route=applicant/contract'));
+            return;
+        }
+
+        $jpeg = base64_decode((string) $contract['signature_data'], true);
+        if ($jpeg === false) {
+            http_response_code(500);
+            die('Semnătura stocată este coruptă.');
+        }
+
+        $pdf = ContractPdf::fill((string) $contract['contract_type'], (string) $contract['volunteer_name'], $jpeg);
+        $this->streamPdf($pdf, 'contract-voluntariat-' . (int) $user['id'] . '.pdf');
+    }
+
+    /** Decodează semnătura primită ca data URL JPEG; returnează binarul sau null. */
+    private function decodeSignature(string $dataUrl): ?string
+    {
+        if (!preg_match('~^data:image/jpe?g;base64,~i', $dataUrl)) {
+            return null;
+        }
+        $base64 = substr($dataUrl, strpos($dataUrl, ',') + 1);
+        // Limitează dimensiunea pentru a preveni abuzul (≈3 MB binar).
+        if (strlen($base64) > 4_000_000) {
+            return null;
+        }
+        $bin = base64_decode($base64, true);
+        if ($bin === false || strlen($bin) < 4 || substr($bin, 0, 2) !== "\xFF\xD8") {
+            return null;
+        }
+        return $bin;
+    }
+
+    private function clientIp(): ?string
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        return $ip !== '' ? substr($ip, 0, 45) : null;
+    }
+
+    private function streamPdf(string $content, string $filename): never
+    {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($content));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+        echo $content;
+        exit;
     }
 
     /** @return array{0: array, 1: array} [date, errors] */

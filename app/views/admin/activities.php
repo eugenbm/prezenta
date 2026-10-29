@@ -42,7 +42,7 @@
             <input type="date" name="date_to" class="form-control" value="<?= e($filters['date_to'] ?? '') ?>">
         </div>
         <div class="col-md-1 d-flex align-items-end">
-            <button type="submit" class="btn btn-outline-secondary w-100">Filtrează</button>
+            <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-funnel me-1"></i>Filtrează</button>
         </div>
     </div>
 </form>
@@ -56,7 +56,9 @@
             </thead>
             <tbody>
             <?php if (!$activities): ?>
-                <tr><td colspan="6" class="cell-empty text-center text-muted py-4">Nicio activitate găsită.</td></tr>
+                <tr><td colspan="6" class="cell-empty py-4">
+                    <div class="empty-state"><i class="bi bi-search"></i>Nicio activitate găsită.</div>
+                </td></tr>
             <?php endif; ?>
             <?php foreach ($activities as $activity): ?>
                 <tr>
@@ -66,14 +68,14 @@
                     <td data-label="Descriere"><?= e(mb_strimwidth($activity['description'], 0, 50, '…')) ?></td>
                     <td data-label="Status"><?= status_badge($activity['status']) ?></td>
                     <td data-label="Acțiuni" class="cell-actions d-flex gap-1 flex-wrap">
-                        <a href="<?= route_url('?route=admin/activity/edit&id=' . $activity['id']) ?>" class="btn btn-sm btn-outline-secondary">Editează</a>
+                        <a href="<?= route_url('?route=admin/activity/edit&id=' . $activity['id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Editează</a>
                         <?php if ($activity['status'] === 'pending'): ?>
                             <form method="post" action="<?= route_url('?route=admin/activity/approve') ?>" class="d-inline">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="id" value="<?= $activity['id'] ?>">
-                                <button type="submit" class="btn btn-sm btn-success">Aprobă</button>
+                                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg me-1"></i>Aprobă</button>
                             </form>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#reject<?= $activity['id'] ?>">Respinge</button>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#reject<?= $activity['id'] ?>"><i class="bi bi-x-lg me-1"></i>Respinge</button>
                         <?php endif; ?>
                     </td>
                 </tr>

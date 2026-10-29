@@ -39,7 +39,7 @@
             <input type="date" name="date_to" class="form-control" value="<?= e($filters['date_to'] ?? '') ?>">
         </div>
         <div class="col-md-1 d-flex align-items-end">
-            <button type="submit" class="btn btn-outline-secondary w-100">Filtrează</button>
+            <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-funnel me-1"></i>Filtrează</button>
         </div>
     </div>
     <div class="mt-2">
@@ -47,13 +47,13 @@
             $exportParams = array_filter($filters);
             $exportQuery = $exportParams ? '&' . http_build_query($exportParams) : '';
         ?>
-        <a href="<?= route_url('?route=admin/reports/export-csv' . $exportQuery) ?>" class="btn btn-sm btn-outline-primary">Exportă CSV</a>
-        <a href="<?= route_url('?route=admin/reports/print' . $exportQuery) ?>" class="btn btn-sm btn-outline-secondary" target="_blank">Vizualizează / Exportă PDF</a>
+        <a href="<?= route_url('?route=admin/reports/export-csv' . $exportQuery) ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-filetype-csv me-1"></i>Exportă CSV</a>
+        <a href="<?= route_url('?route=admin/reports/print' . $exportQuery) ?>" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-printer me-1"></i>Vizualizează / Exportă PDF</a>
     </div>
 </form>
 
 <div class="row g-4 mb-4">
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">Sumar pe tip de activitate</div>
             <div class="card-body p-0">
@@ -74,13 +74,13 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">Sumar pe voluntar</div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                 <table class="table table-stack mb-0">
-                    <thead><tr><th>Voluntar</th><th>Total</th><th>Aprobate</th><th>Așteptare</th><th>Respinse</th><th>Zile cu activitate</th><th>Obiectiv <?= $year ?></th></tr></thead>
+                    <thead><tr><th>Voluntar</th><th>Rol</th><th>Total</th><th>Aprobate</th><th>Așteptare</th><th>Respinse</th><th>Zile cu activitate</th><th>Obiectiv <?= $year ?></th></tr></thead>
                     <tbody>
                     <?php foreach ($byVolunteer as $row): ?>
                         <?php
@@ -89,6 +89,7 @@
                         ?>
                         <tr>
                             <td data-label="Voluntar"><?= e($row['first_name'] . ' ' . $row['last_name']) ?></td>
+                            <td data-label="Rol"><?= role_badge($row['role']) ?></td>
                             <td data-label="Total"><?= $row['total'] ?></td>
                             <td data-label="Aprobate"><?= $row['approved'] ?></td>
                             <td data-label="Așteptare"><?= $row['pending'] ?></td>
@@ -113,7 +114,7 @@
 </div>
 
 <div class="card">
-    <div class="card-header">Detaliu activități (<?= count($activities) ?>)</div>
+    <div class="card-header">Detaliu activități</div>
     <div class="card-body p-0">
         <div class="table-responsive">
         <table class="table table-hover table-stack mb-0">
@@ -122,7 +123,9 @@
             </thead>
             <tbody>
             <?php if (!$activities): ?>
-                <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nicio activitate găsită pentru filtrele selectate.</td></tr>
+                <tr><td colspan="4" class="cell-empty py-4">
+                    <div class="empty-state"><i class="bi bi-search"></i>Nicio activitate găsită pentru filtrele selectate.</div>
+                </td></tr>
             <?php endif; ?>
             <?php foreach ($activities as $activity): ?>
                 <tr>
@@ -137,3 +140,30 @@
         </div>
     </div>
 </div>
+
+<?php
+    $reportParams = array_filter([
+        'user_id' => $filters['user_id'] ?? '',
+        'activity_type_id' => $filters['activity_type_id'] ?? '',
+        'status' => $filters['status'] ?? '',
+        'date_from' => $filters['date_from'] ?? '',
+        'date_to' => $filters['date_to'] ?? '',
+    ], fn ($v) => $v !== '');
+    $reportExtra = http_build_query($reportParams);
+    $reportPageUrl = fn (int $p) => route_url('?route=admin/reports' . ($reportExtra !== '' ? '&' . $reportExtra : '') . '&page=' . $p);
+?>
+<?php if ($page > 1 || $hasMore): ?>
+<nav class="d-flex justify-content-between align-items-center mt-3">
+    <?php if ($page > 1): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= $reportPageUrl($page - 1) ?>">← Anterioarele 10</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">← Anterioarele 10</span>
+    <?php endif; ?>
+    <span class="text-muted small">Pagina <?= (int) $page ?></span>
+    <?php if ($hasMore): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= $reportPageUrl($page + 1) ?>">Următoarele 10 →</a>
+    <?php else: ?>
+        <span class="btn btn-outline-secondary btn-sm disabled">Următoarele 10 →</span>
+    <?php endif; ?>
+</nav>
+<?php endif; ?>

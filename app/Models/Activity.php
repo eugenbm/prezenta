@@ -11,7 +11,7 @@ final class Activity
 {
     private const SELECT_WITH_JOINS = "
         SELECT a.*, t.name AS type_name,
-               u.first_name AS volunteer_first_name, u.last_name AS volunteer_last_name
+               u.first_name AS volunteer_first_name, u.last_name AS volunteer_last_name, u.role AS volunteer_role
         FROM activities a
         INNER JOIN activity_types t ON t.id = a.activity_type_id
         INNER JOIN users u ON u.id = a.user_id
@@ -313,7 +313,7 @@ final class Activity
             $params['date_to'] = $filters['date_to'];
         }
 
-        $sql = "SELECT u.id AS user_id, u.first_name, u.last_name, COUNT(a.id) AS total,
+        $sql = "SELECT u.id AS user_id, u.first_name, u.last_name, u.role, COUNT(a.id) AS total,
                        SUM(CASE WHEN a.status = 'approved' THEN 1 ELSE 0 END) AS approved,
                        SUM(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) AS pending,
                        SUM(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
@@ -321,7 +321,7 @@ final class Activity
                 FROM users u
                 LEFT JOIN activities a ON " . implode(' AND ', $joinConditions) . "
                 WHERE u.role <> 'admin'";
-        $sql .= ' GROUP BY u.id, u.first_name, u.last_name ORDER BY u.last_name ASC, u.first_name ASC';
+        $sql .= ' GROUP BY u.id, u.first_name, u.last_name, u.role ORDER BY u.last_name ASC, u.first_name ASC';
 
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($params);

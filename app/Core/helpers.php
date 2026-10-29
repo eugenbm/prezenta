@@ -104,7 +104,14 @@ function absolute_url(string $query = ''): string
 /** Construiește un URL relativ către un asset din public/assets. */
 function asset_url(string $path): string
 {
-    return base_path() . '/assets/' . ltrim($path, '/');
+    $rel = ltrim($path, '/');
+    $url = base_path() . '/assets/' . $rel;
+    // Cache-busting: adaugă versiunea (data modificării) ca să se reîncarce la schimbări.
+    $file = dirname(__DIR__, 2) . '/public/assets/' . $rel;
+    if (is_file($file)) {
+        $url .= '?v=' . filemtime($file);
+    }
+    return $url;
 }
 
 /** Construiește URL-ul siglei, din config('app.logo_path'). */
@@ -264,6 +271,31 @@ function role_label(string $role): string
         'formator' => 'Formator',
         default => 'Aspirant',
     };
+}
+
+/** Clasa de badge (culoare) pentru un rol. */
+function role_badge_class(string $role): string
+{
+    return match ($role) {
+        'admin' => 'role-admin',
+        'salvator' => 'role-salvator',
+        'formator' => 'role-formator',
+        default => 'role-applicant',
+    };
+}
+
+/** Badge colorat cu eticheta rolului, pentru diferențiere vizuală. */
+function role_badge(string $role): string
+{
+    // Culoare inline pentru a nu depinde de încărcarea (posibil cache-uită) a style.css.
+    [$bg, $fg] = match ($role) {
+        'admin' => ['#34405b', '#ffffff'],
+        'salvator' => ['#1f7a4d', '#ffffff'],
+        'formator' => ['#b5651d', '#ffffff'],
+        default => ['#e2e3e5', '#41464b'],
+    };
+    return '<span class="badge role-badge ' . role_badge_class($role) . '" style="background-color:' . $bg . ';color:' . $fg . ';">'
+        . e(role_label($role)) . '</span>';
 }
 
 function format_date_ro(?string $date): string

@@ -1,8 +1,8 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">Fișe de caz</h1>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= route_url('?route=admin/case-sheets/stats') ?>" class="btn btn-outline-secondary">Statistici</a>
-        <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary">Fișă nouă</a>
+        <a href="<?= route_url('?route=admin/case-sheets/stats') ?>" class="btn btn-outline-secondary"><i class="bi bi-bar-chart-line me-1"></i>Statistici</a>
+        <a href="<?= route_url('?route=admin/case-sheet/create') ?>" class="btn btn-primary"><i class="bi bi-file-earmark-plus me-1"></i>Fișă nouă</a>
     </div>
 </div>
 
@@ -15,7 +15,9 @@
             </thead>
             <tbody>
             <?php if (!$sheets): ?>
-                <tr><td colspan="7" class="cell-empty text-center text-muted py-4">Nicio fișă de caz salvată.</td></tr>
+                <tr><td colspan="7" class="cell-empty py-4">
+                    <div class="empty-state"><i class="bi bi-folder2-open"></i>Nicio fișă de caz salvată.</div>
+                </td></tr>
             <?php endif; ?>
             <?php foreach ($sheets as $sheet): ?>
                 <tr>
@@ -26,12 +28,12 @@
                     <td data-label="Întocmit"><?= e($sheet['intocmit']) ?: '—' ?></td>
                     <td data-label="Creat la"><?= e(date('d.m.Y H:i', strtotime($sheet['created_at']))) ?></td>
                     <td data-label="Acțiuni" class="cell-actions d-flex gap-1 flex-wrap">
-                        <a href="<?= route_url('?route=admin/case-sheet/download&id=' . $sheet['id']) ?>" download class="btn btn-sm btn-primary js-download" data-filename="fisa-caz-<?= e($sheet['nr_fisa'] !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $sheet['nr_fisa']) : (string) $sheet['id']) ?>.pdf">Descarcă PDF</a>
-                        <a href="<?= route_url('?route=admin/case-sheet/print&id=' . $sheet['id']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary">Vizualizează</a>
+                        <a href="<?= route_url('?route=admin/case-sheet/download&id=' . $sheet['id']) ?>" download class="btn btn-sm btn-primary js-download" data-filename="fisa-caz-<?= e($sheet['nr_fisa'] !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $sheet['nr_fisa']) : (string) $sheet['id']) ?>.pdf"><i class="bi bi-download me-1"></i>Descarcă PDF</a>
+                        <a href="<?= route_url('?route=admin/case-sheet/print&id=' . $sheet['id']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye me-1"></i>Vizualizează</a>
                         <form method="post" action="<?= route_url('?route=admin/case-sheet/delete') ?>" class="d-inline" onsubmit="return confirm('Ștergeți definitiv această fișă de caz?');">
                             <?= csrf_field() ?>
                             <input type="hidden" name="id" value="<?= $sheet['id'] ?>">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Șterge</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Șterge</button>
                         </form>
                     </td>
                 </tr>

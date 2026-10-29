@@ -3,24 +3,28 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-list-check"></i></div>
             <div class="stat-value"><?= $counts['total'] ?></div>
             <div class="stat-label">Total activități</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-success">
+            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
             <div class="stat-value"><?= $counts['approved'] ?></div>
             <div class="stat-label">Aprobate</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-pending">
+            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
             <div class="stat-value"><?= $counts['pending'] ?></div>
             <div class="stat-label">În așteptare</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card stat-danger">
+            <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
             <div class="stat-value"><?= $counts['rejected'] ?></div>
             <div class="stat-label">Respinse</div>
         </div>
@@ -46,7 +50,7 @@
         </div>
     </div>
     <div class="col-md-7 d-flex align-items-center">
-        <a href="<?= route_url('?route=applicant/activity/create') ?>" class="btn btn-primary btn-lg">+ Adaugă o activitate</a>
+        <a href="<?= route_url('?route=applicant/activity/create') ?>" class="btn btn-primary btn-lg"><i class="bi bi-plus-circle me-1"></i>Adaugă o activitate</a>
     </div>
 </div>
 
@@ -60,7 +64,9 @@
             </thead>
             <tbody>
             <?php if (!$recent): ?>
-                <tr><td colspan="4" class="cell-empty text-center text-muted py-4">Nu ați introdus încă nicio activitate.</td></tr>
+                <tr><td colspan="4" class="cell-empty py-4">
+                    <div class="empty-state"><i class="bi bi-clipboard-plus"></i>Nu ați introdus încă nicio activitate.</div>
+                </td></tr>
             <?php endif; ?>
             <?php foreach ($recent as $activity): ?>
                 <tr>

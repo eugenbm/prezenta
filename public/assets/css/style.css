@@ -21,9 +21,22 @@
     --sv-field-bg: #fbf9f7;
     --sv-radius: .8rem;
     --sv-radius-lg: 1.1rem;
-    --sv-shadow-sm: 0 1px 2px rgba(36, 31, 30, .05), 0 1px 3px rgba(36, 31, 30, .06);
-    --sv-shadow: 0 10px 24px -16px rgba(36, 31, 30, .28);
-    --sv-shadow-lg: 0 24px 50px -28px rgba(36, 31, 30, .38);
+    /* Umbre stratificate (ambient + direct) pentru profunzime realistă, discretă. */
+    --sv-shadow-sm:
+        0 1px 2px rgba(30, 25, 23, .04),
+        0 2px 4px rgba(30, 25, 23, .04);
+    --sv-shadow:
+        0 1px 2px rgba(30, 25, 23, .03),
+        0 4px 8px -2px rgba(30, 25, 23, .05),
+        0 12px 24px -8px rgba(30, 25, 23, .08);
+    --sv-shadow-lg:
+        0 2px 4px rgba(30, 25, 23, .04),
+        0 8px 18px -6px rgba(30, 25, 23, .07),
+        0 26px 50px -16px rgba(30, 25, 23, .13);
+    --sv-shadow-hover:
+        0 2px 4px rgba(30, 25, 23, .04),
+        0 8px 16px -6px rgba(30, 25, 23, .08),
+        0 18px 34px -12px rgba(30, 25, 23, .14);
 
     --bs-primary: var(--sv-primary);
     --bs-primary-rgb: 179, 32, 44;
@@ -52,7 +65,7 @@ body {
     z-index: 1030;
     background: linear-gradient(120deg, var(--sv-dark), var(--sv-primary-dark));
     border-bottom: 3px solid var(--sv-primary);
-    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, .45);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 8px 24px -12px rgba(0, 0, 0, .5);
 }
 
 .app-header .navbar {
@@ -235,6 +248,10 @@ body {
     border-radius: var(--sv-radius-lg);
     box-shadow: var(--sv-shadow-sm);
     overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+.card:hover {
+    box-shadow: var(--sv-shadow);
 }
 
 .card-header {
@@ -295,7 +312,7 @@ body {
 }
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--sv-shadow);
+    box-shadow: var(--sv-shadow-hover);
 }
 
 .stat-card.stat-success::before { background: linear-gradient(90deg, var(--sv-success), #4fa068); }
@@ -319,6 +336,35 @@ body {
     margin-top: .15rem;
 }
 
+.stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: 0 auto .5rem;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: var(--sv-primary);
+    background: color-mix(in srgb, var(--sv-primary) 12%, #fff);
+}
+.stat-card.stat-success .stat-icon { color: var(--sv-success); background: color-mix(in srgb, var(--sv-success) 14%, #fff); }
+.stat-card.stat-pending .stat-icon { color: #b9821c; background: color-mix(in srgb, var(--sv-warning) 20%, #fff); }
+.stat-card.stat-danger .stat-icon { color: var(--sv-danger); background: color-mix(in srgb, var(--sv-danger) 12%, #fff); }
+
+/* --- Empty states ---------------------------------------------------------*/
+.empty-state {
+    text-align: center;
+    padding: 2.25rem 1rem;
+    color: var(--sv-muted);
+}
+.empty-state .bi {
+    font-size: 2rem;
+    opacity: .5;
+    display: block;
+    margin-bottom: .5rem;
+}
+
 /* --- Badge-uri status -----------------------------------------------------*/
 .status-badge {
     font-size: .74rem;
@@ -331,6 +377,20 @@ body {
 .badge-approved { background-color: var(--sv-success); color: #fff; }
 .badge-pending { background-color: var(--sv-warning); color: #fff; }
 .badge-rejected { background-color: var(--sv-danger); color: #fff; }
+
+/* --- Badge-uri rol --------------------------------------------------------*/
+.role-badge {
+    font-size: .74rem;
+    font-weight: 600;
+    padding: .4em .7em;
+    border-radius: 999px;
+    letter-spacing: .01em;
+}
+
+.role-admin { background-color: #34405b; color: #fff; }
+.role-salvator { background-color: #1f7a4d; color: #fff; }
+.role-formator { background-color: #b5651d; color: #fff; }
+.role-applicant { background-color: #e2e3e5; color: #41464b; }
 
 /* --- Pagini de autentificare (bază · folosită de pagina de configurare) ---- */
 .auth-page {
@@ -933,7 +993,14 @@ body.auth-login {
         display: block;
         width: 100%;
     }
+    /* Lățime auto + box-sizing ca marginea orizontală a cardului să NU adauge
+       lățime peste container (altfel apare derulare orizontală). */
+    .table-responsive:has(.table-stack) {
+        overflow-x: hidden;
+    }
     .table-stack tr {
+        width: auto;
+        box-sizing: border-box;
         border: 1px solid var(--sv-border);
         border-radius: var(--sv-radius);
         padding: .35rem .85rem;
@@ -949,6 +1016,7 @@ body.auth-login {
         text-align: right;
         padding: .5rem 0;
         border-bottom: 1px solid #f1eae6;
+        overflow-wrap: anywhere;
     }
     .table-stack tbody td:last-child {
         border-bottom: 0;
@@ -962,6 +1030,16 @@ body.auth-login {
         color: var(--sv-muted);
         text-align: left;
         flex: 0 0 auto;
+    }
+    /* Valoarea celulei ocupă spațiul rămas și se încadrează (text lung nu
+       produce derulare orizontală); conținutul multi-linie rămâne stivuit. */
+    .table-stack tbody td > * {
+        min-width: 0;
+    }
+    .table-stack tbody td .cell-value {
+        flex: 1 1 auto;
+        text-align: right;
+        overflow-wrap: anywhere;
     }
     /* Celula de acțiuni: butoanele ocupă toată lățimea, ușor de apăsat */
     .table-stack tbody td.cell-actions {

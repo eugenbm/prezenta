@@ -29,6 +29,11 @@ final class App
         'applicant/activity/create' => [ApplicantController::class, 'createActivity', 'applicant'],
         'applicant/activity/edit' => [ApplicantController::class, 'editActivity', 'applicant'],
         'applicant/profile' => [ApplicantController::class, 'profile', 'applicant'],
+        'applicant/inventory' => [ApplicantController::class, 'inventory', 'applicant'],
+        'applicant/inventory/add' => [ApplicantController::class, 'addInventoryItem', 'applicant'],
+        'applicant/contract' => [ApplicantController::class, 'contract', 'applicant'],
+        'applicant/contract/preview' => [ApplicantController::class, 'previewContract', 'applicant'],
+        'applicant/contract/download' => [ApplicantController::class, 'downloadContract', 'applicant'],
 
         'admin/dashboard' => [AdminController::class, 'dashboard', 'admin'],
         'admin/users' => [AdminController::class, 'users', 'admin'],
@@ -36,6 +41,7 @@ final class App
         'admin/users/edit' => [AdminController::class, 'editUser', 'admin'],
         'admin/users/toggle' => [AdminController::class, 'toggleUser', 'admin'],
         'admin/users/reset-password' => [AdminController::class, 'resetPassword', 'admin'],
+        'admin/users/inventory' => [AdminController::class, 'userInventory', 'admin'],
         'admin/activities' => [AdminController::class, 'activities', 'admin'],
         'admin/activity/create' => [AdminController::class, 'createActivity', 'admin'],
         'admin/activity/edit' => [AdminController::class, 'editActivity', 'admin'],
@@ -50,6 +56,17 @@ final class App
         'admin/case-sheet/print' => [AdminController::class, 'printCaseSheet', 'admin'],
         'admin/case-sheet/download' => [AdminController::class, 'downloadCaseSheet', 'admin'],
         'admin/case-sheet/delete' => [AdminController::class, 'deleteCaseSheet', 'admin'],
+        'admin/contracts' => [AdminController::class, 'contracts', 'admin'],
+        'admin/contract/preview' => [AdminController::class, 'previewContract', 'admin'],
+        'admin/contract/download' => [AdminController::class, 'downloadContract', 'admin'],
+        'admin/inventory' => [AdminController::class, 'inventory', 'admin'],
+        'admin/inventory/more' => [AdminController::class, 'inventoryMore', 'admin'],
+        'admin/inventory/create' => [AdminController::class, 'createInventoryItem', 'admin'],
+        'admin/inventory/edit' => [AdminController::class, 'editInventoryItem', 'admin'],
+        'admin/inventory/delete' => [AdminController::class, 'deleteInventoryItem', 'admin'],
+        'admin/inventory/item' => [AdminController::class, 'inventoryItem', 'admin'],
+        'admin/inventory/assign' => [AdminController::class, 'assignInventory', 'admin'],
+        'admin/inventory/unassign' => [AdminController::class, 'unassignInventory', 'admin'],
     ];
 
     public function run(): void
